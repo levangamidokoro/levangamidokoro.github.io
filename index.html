@@ -6,7 +6,7 @@
 <meta name="description" content="レバンガ北海道の試合が盛り上がった瞬間をお知らせする、非公式のファンサービスです。">
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="apple-touch-icon" href="icon-180.png">
-<meta name="theme-color" content="#8FC31F">
+<meta name="theme-color" content="#14290F">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -15,55 +15,124 @@
 :root{
   --lime:#8FC31F; --pine:#14290F; --snow:#F6F8F1; --frost:#DDE6D0; --moss:#56664F;
   --bg:var(--snow); --ink:var(--pine); --sub:var(--moss); --line:var(--frost);
-  --btn-bg:var(--pine); --btn-ink:var(--snow); --empty:#CFDAC0; --card:#FFFFFF;
+  --btn-bg:var(--pine); --btn-ink:var(--snow); --empty:#CFDAC0; --card:#FFFFFF; --panel:#FFFFFF;
   --display:"Dela Gothic One","Hiragino Sans","Noto Sans JP",sans-serif;
   --body:"BIZ UDPGothic","Hiragino Sans","Noto Sans JP",sans-serif;
 }
 @media (prefers-color-scheme: dark){
   :root{ --bg:#0D1A0B; --ink:#E8F0DD; --sub:#9AAA90; --line:#24361F;
-         --btn-bg:#8FC31F; --btn-ink:#14290F; --empty:#2C4226; --card:#122310; }
+         --btn-bg:#8FC31F; --btn-ink:#14290F; --empty:#2C4226; --card:#122310; --panel:#122310; }
 }
 *{box-sizing:border-box}
-html{-webkit-text-size-adjust:100%}
+html{-webkit-text-size-adjust:100%;scroll-behavior:smooth}
+@media (prefers-reduced-motion:reduce){html{scroll-behavior:auto}}
 body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--body);
-     font-size:16px;line-height:1.75}
+     font-size:16px;line-height:1.75;overflow-x:hidden}
 a{color:inherit}
-.wrap{max-width:560px;margin:0 auto;padding:0 20px}
+.wrap{max-width:560px;margin:0 auto;padding:0 16px}
 :focus-visible{outline:3px solid var(--lime);outline-offset:3px;border-radius:4px}
 
-header.site{display:flex;align-items:baseline;gap:12px;flex-wrap:wrap;padding-top:20px;padding-bottom:4px}
-.mark{font-family:var(--display);font-size:22px;letter-spacing:.02em;margin:0;font-weight:400}
-.edition{font-size:13px;color:var(--sub)}
+/* ヘッダー */
+header.site{display:flex;align-items:center;gap:10px;padding-top:14px;padding-bottom:14px}
+.brand{display:flex;flex-direction:column;line-height:1.25}
+.mark{font-family:var(--display);font-size:21px;letter-spacing:.02em;margin:0;font-weight:400;white-space:nowrap}
+.edition{font-size:11px;font-weight:700;color:var(--sub);white-space:nowrap}
+header.site .go{margin-left:auto;font-size:13px;font-weight:700;text-decoration:none;padding:6px 12px;
+                border-radius:999px;background:var(--lime);color:var(--pine);white-space:nowrap}
 
-.hero{margin-top:14px;padding:28px 0 32px;border-top:6px solid var(--lime)}
-.hero .ctx{margin:0;font-size:14px;color:var(--sub)}
-.hero .word{margin:6px 0 4px;font-family:var(--display);font-weight:400;
-            font-size:clamp(46px,15vw,84px);line-height:1.08;letter-spacing:0}
+/* トップ（試合の状態）：ポスターのように暗い地に黄緑の大文字 */
+.hero{position:relative;overflow:hidden;background:var(--pine);color:var(--snow);padding:30px 0 34px}
+.hero .court{position:absolute;right:-90px;top:-40px;width:360px;height:360px;opacity:.13;pointer-events:none}
+.hero .wrap{position:relative}
+.chip{display:inline-block;font-size:13px;font-weight:700;padding:3px 10px;border-radius:999px;
+      background:var(--lime);color:var(--pine);margin-right:8px}
+.chip.live::before{content:"";display:inline-block;width:8px;height:8px;border-radius:50%;background:#E03C31;margin-right:6px;vertical-align:1px;animation:blink 1.2s steps(2) infinite}
+@keyframes blink{50%{opacity:0}}
+.hero .ctx{margin:0;font-size:14px;color:#C9D6BC}
+.hero .word{margin:12px 0 6px;font-family:var(--display);font-weight:400;color:var(--lime);
+            font-size:clamp(52px,17vw,96px);line-height:1.02;letter-spacing:0}
 .hero .say{margin:0;font-size:17px;max-width:32em}
-.hero .word .wd{font-family:var(--body);font-weight:700;font-size:.34em;margin-left:.35em;white-space:nowrap}
-.hero.hot{background:var(--lime);color:var(--pine);border-top-color:var(--lime)}
+.hero .word .wd{font-family:var(--body);font-weight:700;font-size:.3em;margin-left:.35em;white-space:nowrap;color:var(--snow)}
+.hero.hot{background:var(--lime);color:var(--pine)}
+.hero.hot .word{color:var(--pine)}
 .hero.hot .ctx{color:var(--pine)}
+.hero.hot .chip{background:var(--pine);color:var(--lime)}
+.hero.hot .court{opacity:.18}
 .hero.hot:not(.still){animation:flood .7s cubic-bezier(.2,.7,.2,1) both}
 @keyframes flood{from{clip-path:inset(0 100% 0 0)}to{clip-path:inset(0 0 0 0)}}
-@media (prefers-reduced-motion:reduce){.hero.hot{animation:none}}
 
-.btn{display:inline-flex;align-items:center;justify-content:center;min-height:48px;padding:0 20px;
-     border-radius:6px;border:0;background:var(--btn-bg);color:var(--btn-ink);font:inherit;
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;min-height:52px;padding:0 22px;
+     border-radius:999px;border:0;background:var(--btn-bg);color:var(--btn-ink);font:inherit;
      font-weight:700;text-decoration:none;cursor:pointer}
 .btn.quiet{background:transparent;color:var(--ink);box-shadow:inset 0 0 0 2px var(--sub)}
-.hero .btn{margin-top:20px}
+.btn.big{width:100%;min-height:60px;font-size:18px;background:var(--lime);color:var(--pine);
+         box-shadow:0 6px 0 #5E8410;transition:transform .08s,box-shadow .08s}
+.btn.big:active{transform:translateY(4px);box-shadow:0 2px 0 #5E8410}
+.btn.big.quiet{background:transparent;color:var(--ink);box-shadow:inset 0 0 0 2px var(--sub)}
+.btn:disabled{opacity:.6}
+.hero .btn{margin-top:20px;background:var(--lime);color:var(--pine)}
+.hero .btn.quiet{background:transparent;color:var(--snow);box-shadow:inset 0 0 0 2px #C9D6BC}
 .hero.hot .btn{background:var(--pine);color:var(--lime)}
 
-.meter{display:flex;align-items:center;gap:12px;margin-top:22px;font-size:13px;color:var(--sub)}
+.meter{display:flex;align-items:center;gap:12px;margin-top:22px;font-size:13px;color:#C9D6BC}
 .hero.hot .meter{color:var(--pine)}
 .bars{display:grid;grid-template-columns:repeat(10,1fr);gap:4px;flex:1;max-width:260px}
-.bars i{height:12px;border-radius:2px;background:var(--empty)}
+.bars i{height:12px;border-radius:2px;background:rgba(246,248,241,.16)}
 .bars i.on{background:var(--lime)}
 .hero.hot .bars i{background:rgba(20,41,15,.18)}
 .hero.hot .bars i.on{background:var(--pine)}
 
-section{padding:28px 0 4px}
-section h2{margin:0 0 10px;font-family:var(--display);font-weight:400;font-size:19px}
+/* 広告ブロック：キャッチ→スマホの実物イメージ→ボタン */
+.pitch{padding:36px 0 8px}
+.kicker{margin:0 0 6px;font-size:13px;font-weight:700;color:var(--sub);letter-spacing:.04em}
+.hook{margin:0;font-family:var(--display);font-weight:400;font-size:clamp(30px,8.4vw,44px);line-height:1.3}
+.hook mark{background:linear-gradient(transparent 58%,var(--lime) 58%);color:inherit;padding:0 .05em}
+.hook-sub{margin:12px 0 0;font-size:16px;color:var(--sub)}
+.phone{position:relative;width:250px;height:300px;margin:26px auto 0;border-radius:36px 36px 0 0;
+       background:#0B160A;padding:14px 12px 0;box-shadow:0 0 0 7px #24361F,0 18px 40px rgba(20,41,15,.28);
+       overflow:hidden;transform:rotate(-3deg)}
+.phone .tm{margin:14px 0 0;text-align:center;font-family:var(--display);font-size:46px;color:#E8F0DD;line-height:1}
+.phone .dt{margin:4px 0 18px;text-align:center;font-size:12px;color:#9AAA90}
+.toast{display:grid;grid-template-columns:34px 1fr;gap:2px 10px;padding:11px 12px;border-radius:16px;
+       background:rgba(246,248,241,.94);color:var(--pine);font-size:13px;line-height:1.5;
+       animation:drop 3.2s cubic-bezier(.2,.8,.2,1) infinite}
+.toast .ic{grid-row:span 3;width:34px;height:34px;border-radius:9px;background:var(--lime);
+           display:grid;place-items:center;font-family:var(--display);font-size:13px;color:var(--pine)}
+.toast .ap{font-size:11px;color:var(--moss)}
+.toast b{font-size:14px}
+.toast.two{margin-top:8px;opacity:.55;animation:none}
+@keyframes drop{0%{transform:translateY(-130%);opacity:0}12%,88%{transform:none;opacity:1}100%{transform:none;opacity:1}}
+@media (prefers-reduced-motion:reduce){.toast,.chip.live::before,.hero.hot{animation:none!important}}
+.cta{position:relative;margin-top:-6px;padding:22px 18px 18px;border-radius:20px;background:var(--panel);
+     box-shadow:0 0 0 1px var(--line),0 10px 30px rgba(20,41,15,.10)}
+.badges{display:flex;flex-wrap:wrap;gap:6px;margin:0 0 14px;padding:0;list-style:none}
+.badges li{font-size:13px;font-weight:700;padding:4px 10px;border-radius:999px;background:var(--bg);box-shadow:inset 0 0 0 1px var(--line)}
+.badges li::before{content:"✓ ";color:#3F7A1A}
+@media (prefers-color-scheme: dark){.badges li::before{color:var(--lime)}}
+.cta .note{margin-top:10px;text-align:center}
+.cta .row{display:grid;gap:10px}
+.notify .btn[hidden]{display:none}
+
+/* 数字の裏付け */
+.proof{padding:34px 0 4px}
+.stats{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin:12px 0 6px}
+.stat{padding:14px 8px 12px;border-radius:14px;background:var(--pine);color:var(--snow);text-align:center}
+.stat b{display:block;font-family:var(--display);font-weight:400;font-size:clamp(24px,7.4vw,34px);line-height:1.1;color:var(--lime)}
+.stat b small{font-family:var(--body);font-weight:700;font-size:.5em;color:var(--snow);margin-left:2px}
+.stat span{display:block;margin-top:6px;font-size:12px;line-height:1.45}
+.fine{margin:4px 0 0;font-size:12px;color:var(--sub)}
+
+/* 3ステップ */
+ol.steps{list-style:none;margin:12px 0 0;padding:0;display:grid;gap:10px;counter-reset:s}
+ol.steps li{counter-increment:s;display:grid;grid-template-columns:44px 1fr;gap:12px;align-items:center;
+            padding:12px 14px;border-radius:14px;background:var(--panel);box-shadow:0 0 0 1px var(--line)}
+ol.steps li::before{content:counter(s);display:grid;place-items:center;width:44px;height:44px;border-radius:50%;
+            background:var(--lime);color:var(--pine);font-family:var(--display);font-size:20px}
+ol.steps b{display:block}
+ol.steps span{font-size:14px;color:var(--sub)}
+
+section{padding:30px 0 4px}
+section h2{margin:0 0 10px;font-family:var(--display);font-weight:400;font-size:22px;line-height:1.4}
 .note{margin:0;color:var(--sub);font-size:14px}
 ol.moments,ul.games{list-style:none;margin:0;padding:0}
 h3.sub{font-size:14px;margin:22px 0 4px;color:var(--sub);font-weight:700}
@@ -79,45 +148,50 @@ ul.games li{display:grid;grid-template-columns:76px 1fr auto;gap:12px;align-item
 .opp small{display:block;font-weight:400;font-size:13px;color:var(--sub)}
 .start{font-family:var(--display);font-size:16px}
 .links{margin-top:14px;display:flex;gap:10px;flex-wrap:wrap}
-.lead{margin:14px auto 0;font-size:14px;color:var(--sub)}
-.lead a{color:var(--ink);font-weight:700;margin-left:4px;white-space:nowrap}
-.sample{display:grid;gap:2px;max-width:420px;margin:12px 0 14px;padding:12px 14px;border-radius:14px;background:var(--card);border:1px solid var(--line);border-left:6px solid var(--lime);box-shadow:0 2px 8px rgba(20,41,15,.08);font-size:14px}
-.sample .app{font-size:11px;color:var(--sub)}
-dl.facts{display:grid;grid-template-columns:5.5em 1fr;gap:4px 10px;margin:0 0 10px;font-size:14px}
-dl.facts dt{color:var(--sub)}dl.facts dd{margin:0}
-.notify .row{display:flex;gap:10px;flex-wrap:wrap;margin-top:12px}
-.notify .btn[hidden]{display:none}
-footer{padding:40px 0 48px;font-size:12px;color:var(--sub)}
+
+/* 画面下に追従するボタン */
+.sticky{position:fixed;left:12px;right:12px;bottom:12px;z-index:10;max-width:536px;margin:0 auto;
+        display:flex;align-items:center;justify-content:center;min-height:56px;border-radius:999px;
+        background:var(--lime);color:var(--pine);font-weight:700;font-size:17px;text-decoration:none;
+        box-shadow:0 8px 24px rgba(20,41,15,.35);transform:translateY(140%);visibility:hidden;transition:transform .25s,visibility 0s .25s}
+.sticky.show{transform:none;visibility:visible;transition:transform .25s}
+.sticky small{font-weight:400;font-size:12px;margin-left:8px}
+footer{padding:40px 0 96px;font-size:12px;color:var(--sub)}
 footer p{margin:0 0 6px}
 </style>
 </head>
 <body data-api="https://midokoro-api.levangamidokoro.workers.dev">
-<header class="site wrap"><h1 class="mark">見どころなう</h1><span class="edition">レバンガ北海道版（非公式）</span></header>
-<p class="lead wrap">試合を最初から見られなくても大丈夫。接戦・逆転・終盤の山場を判定して、「いま見て！」とお知らせします。<a href="#notify">通知を受け取る</a></p>
+<header class="site wrap"><div class="brand"><h1 class="mark">見どころなう</h1><span class="edition">レバンガ北海道版（非公式）</span></div><a class="go" href="#notify">通知を受け取る</a></header>
 <main>
-<div id="live"><div class="hero"><div class="wrap"><p class="ctx">次の試合　vs 佐賀　アウェイ（佐賀県）</p><h2 class="word">10/16<span class="wd">金曜日</span></h2><p class="say">19:05開始。始まったら、見どころをお知らせします。</p></div></div><section><div class="wrap"><h2>前回の試合　10/10 千葉J戦</h2><div class="links"><a class="btn quiet" href="https://basketball.mb.softbank.jp/api/v1/video/highlight?game_id=506447&amp;utm_source=bleague&amp;utm_medium=bleague&amp;utm_campaign=bleague_bleague_032" target="_blank" rel="noopener">ハイライト動画を見る</a></div></div></section></div>
-<section class="notify" id="notify"><div class="wrap"><h2>通知を受け取る</h2><div class="sample" aria-label="通知の例"><span class="app">見どころなう</span><b>いま見て！ 佐賀戦</b><span>第4Q残り2分、1ポゼッション差。レバンガが逆転！</span></div><dl class="facts"><dt>届くとき</dt><dd>試合が接戦・逆転・終盤の山場になった瞬間</dd><dt>回数</dt><dd>この端末へは1試合おおむね1〜3回。試合のない日は届きません</dd></dl><p class="note" id="np" data-line="0">見どころが来た瞬間に、この端末へお知らせします。</p><div class="row"><button class="btn" id="nb" hidden>この端末に通知する</button></div></div></section>
+<div id="live-top" data-live><div class="hero"><svg class="court" viewBox="0 0 200 200" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="3"><circle cx="100" cy="100" r="96"/><circle cx="100" cy="100" r="30"/><path d="M4 100H196"/><path d="M40 4v40a60 60 0 0 0 120 0V4"/></svg><div class="wrap"><p class="ctx"><span class="chip">次の試合まであと4日</span>vs 佐賀　アウェイ（佐賀県）</p><h2 class="word">10/16<span class="wd">金曜日 19:05</span></h2><p class="say">始まったら、見どころをお知らせします。</p></div></div></div>
+<section class="notify pitch" id="notify"><div class="wrap"><p class="kicker">レバンガ北海道ファンのための通知サービス（非公式）</p><h2 class="hook">試合は、<mark>山場だけ</mark>見ればいい。</h2><p class="hook-sub">接戦・逆転・終盤の勝負どころを自動で判定。見逃したくない瞬間だけ、スマホに「いま見て！」が届きます。</p><div class="phone" aria-hidden="true"><p class="tm">20:48</p><p class="dt">金曜日</p><div class="toast"><span class="ic">見</span><span class="ap">見どころなう・いま</span><b>いま見て！ 佐賀戦</b><span>第4Q残り2分、1ポゼッション差。レバンガが逆転！</span></div><div class="toast two"><span class="ic">見</span><span class="ap">見どころなう・12分前</span><b>そろそろ 佐賀戦</b><span>第4Q、差が縮まってきました。</span></div></div><div class="cta"><ul class="badges"><li>無料</li><li>登録・アプリ不要</li><li>試合のない日は届かない</li></ul><div class="row"><button class="btn big" id="nb" hidden>無料で通知を受け取る</button></div><p class="note" id="np" data-line="0">押すと通知の許可を聞かれます。「許可」を選べば完了です。</p><p class="note">届くのは1試合おおむね1〜3回。</p></div></div></section>
+<section class="proof"><div class="wrap"><h2>通知は、本当に見たい試合だけ。</h2><div class="stats"><div class="stat"><b>1.2<small>回</small></b><span>1試合あたりの<br>通知（平均）</span></div><div class="stat"><b>23<small>/23</small></b><span>5点差以内の<br>接戦で通知</span></div><div class="stat"><b>0<small>回</small></b><span>20点差以上の<br>大差の試合</span></div></div><p class="fine">過去シーズンのレバンガの60試合に、いまの判定ルールを当てはめた試算です。実際の回数は試合によって変わります。</p></div></section>
+<div id="live-low" data-live><section><div class="wrap"><h2>前回の試合　10/10 千葉J戦</h2><div class="links"><a class="btn quiet" href="https://basketball.mb.softbank.jp/api/v1/video/highlight?game_id=506447&amp;utm_source=bleague&amp;utm_medium=bleague&amp;utm_campaign=bleague_bleague_032" target="_blank" rel="noopener">ハイライト動画を見る</a></div></div></section></div>
+<section><div class="wrap"><h2>はじめ方は3つだけ</h2><ol class="steps"><li><div><b>ボタンを押す</b><span>アプリのインストールも会員登録もいりません</span></div></li><li><div><b>通知を「許可」する</b><span>iPhoneはホーム画面に追加してから開きます</span></div></li><li><div><b>あとは待つだけ</b><span>山場が来たら「いま見て！」が届きます</span></div></li></ol></div></section>
 <section><div class="wrap"><h2>この先の試合</h2><ul class="games"><li><span class="day">10/18<small>日曜日</small></span><span class="opp">vs 横浜BC<small>アウェイ（神奈川県）</small></span><span class="start">15:05</span></li><li><span class="day">10/21<small>水曜日</small></span><span class="opp">vs 富山<small>ホーム</small></span><span class="start">19:05</span></li><li><span class="day">10/24<small>土曜日</small></span><span class="opp">vs 広島<small>アウェイ（広島県）</small></span><span class="start">14:05</span></li><li><span class="day">10/31<small>土曜日</small></span><span class="opp">vs 茨城<small>アウェイ（茨城県）</small></span><span class="start">15:05</span></li></ul></div></section>
 </main>
 <footer class="wrap">
 <p>レバンガ北海道を応援する個人の非公式サービスです。B.LEAGUE・レバンガ北海道とは関係ありません。</p>
 <p>試合の映像と記録はB.LEAGUE公式でご覧ください。見どころの判定は試験運用中です。</p>
-<p>最終更新 2026-10-12 13:35</p>
+<p>最終更新 2026-10-12 13:52</p>
 </footer>
+<a class="sticky" id="sticky" href="#notify" tabindex="-1">「いま見て！」を受け取る<small>無料</small></a>
 <script>
 (() => {
-  // 30秒ごとに試合の部分だけ新しくする（ページ全体は読み直さない）
+  // 30秒ごとに試合の部分（data-live）だけ新しくする（ページ全体は読み直さない）
   async function refresh() {
     if (document.hidden) return;
     try {
       const r = await fetch(location.pathname, { cache: "no-store" });
       const doc = new DOMParser().parseFromString(await r.text(), "text/html");
-      const fresh = doc.getElementById("live"), cur = document.getElementById("live");
-      if (!fresh || !cur || fresh.innerHTML === cur.innerHTML) return;
-      const wasHot = !!cur.querySelector(".hero.hot");
-      cur.replaceWith(fresh);
-      const hot = fresh.querySelector(".hero.hot");
-      if (hot && wasHot) hot.classList.add("still");
+      for (const fresh of doc.querySelectorAll("[data-live]")) {
+        const cur = document.getElementById(fresh.id);
+        if (!cur || fresh.innerHTML === cur.innerHTML) continue;
+        const wasHot = !!cur.querySelector(".hero.hot");
+        cur.replaceWith(fresh);
+        const hot = fresh.querySelector(".hero.hot");
+        if (hot && wasHot) hot.classList.add("still");
+      }
       document.title = doc.title;
     } catch (e) {}
   }
@@ -128,6 +202,7 @@ footer p{margin:0 0 6px}
 (async () => {
   const msg = document.getElementById("np"), btn = document.getElementById("nb");
   if (!msg || !btn) return;
+  window.__midokoroPush = true;
   const API = document.body.dataset.api || "";
   const viaLine = msg.dataset.line === "1" ? "LINEで受け取れます。" : "";
   const ios = /iPhone|iPad|iPod/.test(navigator.userAgent);
@@ -149,10 +224,11 @@ footer p{margin:0 0 6px}
     headers: { "Content-Type": "application/json" }, body: JSON.stringify(sub) });
   const show = (on) => {
     btn.hidden = false;
-    btn.textContent = on ? "この端末の通知を止める" : "この端末に通知する";
+    btn.textContent = on ? "この端末の通知を止める" : "無料で通知を受け取る";
     btn.classList.toggle("quiet", on);
     msg.textContent = on ? "通知はオンです。見どころが来た瞬間にお知らせします。"
-                         : "見どころが来た瞬間に、この端末へお知らせします。";
+                         : "押すと通知の許可を聞かれます。「許可」を選べば完了です。";
+    window.__midokoroOn = on; window.dispatchEvent(new Event("midokoro"));
   };
   let sub = await reg.pushManager.getSubscription();
   show(!!sub);
@@ -175,6 +251,23 @@ footer p{margin:0 0 6px}
       msg.textContent = "通知を設定できませんでした。時間をおいて、もう一度押してください。";
     } finally { btn.disabled = false; }
   };
+})();
+
+(() => {
+  // 画面下の追従ボタン：通知がまだオフで、申し込み欄が見えていないときだけ出す
+  const bar = document.getElementById("sticky"), box = document.getElementById("notify");
+  if (!bar || !box) return;
+  let inView = true;
+  const update = () => {
+    const want = bar.dataset.mode === "line" || (window.__midokoroPush && window.__midokoroOn === false);
+    bar.classList.toggle("show", !!want && !inView && scrollY > 120);
+    bar.tabIndex = bar.classList.contains("show") ? 0 : -1;
+  };
+  if ("IntersectionObserver" in window)
+    new IntersectionObserver((es) => { inView = es[0].isIntersecting; update(); }).observe(box);
+  addEventListener("scroll", update, { passive: true });
+  addEventListener("midokoro", update);
+  update();
 })();
 </script><script>try{navigator.sendBeacon(document.body.dataset.api+"/api/hit",new Blob(["{}"],{type:"text/plain"}))}catch(e){}</script>
 </body></html>
