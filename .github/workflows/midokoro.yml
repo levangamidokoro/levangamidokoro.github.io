@@ -1,0 +1,66 @@
+# 見どころなう レバンガ北海道版：GitHub Actions で収集・判定し、GitHub Pages にページを出す
+# 10分おきに起動。試合が近い・試合中なら終わるまで動き（20秒ごと）、なければすぐ終了する
+name: midokoro
+
+on:
+  schedule:
+    - cron: "4,14,24,34,44,54 * * * *"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: midokoro
+  cancel-in-progress: false
+
+jobs:
+  run:
+    runs-on: ubuntu-latest
+    timeout-minutes: 345
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: 公開用ブランチ（gh-pages）を用意
+        run: |
+          git config --global user.name "midokoro-bot"
+          git config --global user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          if git ls-remote --exit-code --heads origin gh-pages >/dev/null; then
+            git clone -q --depth 1 --branch gh-pages "https://x-access-token:${{ github.token }}@github.com/${{ github.repository }}.git" site
+          else
+            mkdir site
+            (cd site && git init -q -b gh-pages \
+              && git remote add origin "https://x-access-token:${{ github.token }}@github.com/${{ github.repository }}.git")
+          fi
+          find site -maxdepth 1 -type l -delete          # 以前の実行で紛れ込んだリンクを消す（Pagesはリンクを扱えない）
+          touch site/.nojekyll
+          printf 'data/games/\ndata/daemon.log\ndata/*.tmp\n*.tmp\n' > site/.gitignore
+          mkdir -p site/data
+          ln -s site/data data
+          ln -s site public
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - run: pip install -q -r requirements.txt
+
+      - name: 収集・判定（試合がなければすぐ終了）
+        env:
+          TZ: Asia/Tokyo
+          MIDOKORO_PUSH: "0"
+          MIDOKORO_LOOKAHEAD_MIN: "60"
+          MIDOKORO_PUBLISH_CMD: "bash publish.sh"
+          LINE_CHANNEL_ACCESS_TOKEN: ${{ secrets.LINE_CHANNEL_ACCESS_TOKEN }}
+          LINE_ADD_URL: ${{ vars.LINE_ADD_URL }}
+          SITE_URL: ${{ vars.SITE_URL }}
+        run: python midokoro_daemon.py --until-idle --max-minutes 330
+
+      - name: 試合データの控え（学習用、90日保存）
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: games-${{ github.run_id }}
+          path: data/games/
+          if-no-files-found: ignore
+          retention-days: 90

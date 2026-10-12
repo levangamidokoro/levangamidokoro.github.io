@@ -1,0 +1,11 @@
+# 接続確認（手動実行用）：GitHubのサーバーから B.LEAGUE の日程ページと試合データに届くか
+name: check
+on:
+  workflow_dispatch:
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - run: |
+          curl -sS -o /dev/null -w "日程ページ %{http_code}\n" "https://www.bleague.jp/schedule/?tab=1&year=2026&mon=10&club=702"
+          curl -sS -w " ← 試合データ latestid %{http_code}\n" "http://b-league.s3.amazonaws.com/web_json/v2_genius_contexts/506436/latestid"
