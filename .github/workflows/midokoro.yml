@@ -6,6 +6,11 @@ on:
   schedule:
     - cron: "4,14,24,34,44,54 * * * *"
   workflow_dispatch:
+    inputs:
+      force_publish:
+        description: "ページをすぐに公開し直す"
+        type: boolean
+        default: false
 
 permissions:
   contents: write
@@ -37,6 +42,7 @@ jobs:
           touch site/.nojekyll
           printf 'data/games/\ndata/daemon.log\ndata/*.tmp\n*.tmp\n' > site/.gitignore
           mkdir -p site/data
+          if [ "${{ github.event.inputs.force_publish }}" = "true" ]; then rm -f site/data/last_publish.txt; fi
           ln -s site/data data
           ln -s site public
 

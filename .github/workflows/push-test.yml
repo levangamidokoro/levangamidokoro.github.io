@@ -1,0 +1,25 @@
+# Webプッシュのテスト送信（手動実行用）。登録している全員に1通だけ送る
+name: push-test
+on:
+  workflow_dispatch:
+    inputs:
+      message:
+        description: "本文"
+        default: "テスト通知です。届いていれば設定は完了です。"
+permissions:
+  contents: read
+  id-token: write
+jobs:
+  send:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - run: pip install -q requests
+      - name: 送信
+        env:
+          MIDOKORO_API: ${{ vars.MIDOKORO_API }}
+          MSG: ${{ github.event.inputs.message }}
+        run: python -c "import os, push_api; print('送れた件数', push_api.send_all('見どころなう（テスト）', os.environ['MSG'], './'))"
