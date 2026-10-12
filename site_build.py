@@ -537,7 +537,8 @@ SCRIPT = r"""
 (() => {
   const f = (r) => `${Math.floor(r / 60)}:${String(Math.floor(r % 60)).padStart(2, "0")}`;
   const label = (t) => {
-    if (t <= 2400) { const q = Math.max(1, Math.ceil(t / 600)); return `${q}Q 残り${f(q * 600 - t)}`; }
+    if (t < 2400) { const q = Math.floor(t / 600) + 1; return `${q}Q 残り${f(q * 600 - t)}`; }
+    if (t === 2400) return "4Q 残り0:00";
     const k = Math.ceil((t - 2400) / 300);
     return `${k === 1 ? "OT" : "OT" + k} 残り${f(2400 + 300 * k - t)}`;
   };
@@ -634,9 +635,11 @@ def heat_pct(score: int | float | None) -> int:
 def clock_label(t: float) -> str:
     """経過秒 → 「4Q 残り2:00」"""
     f = lambda r: f"{int(r // 60)}:{int(r % 60):02d}"
-    if t <= 2400:
-        q = max(1, math.ceil(t / 600))
+    if t < 2400:                     # クォーターの境目は、次のクォーターの開始として書く（判定もそのクォーターで行うため）
+        q = int(t // 600) + 1
         return f"{q}Q 残り{f(q * 600 - t)}"
+    if t == 2400:
+        return "4Q 残り0:00"
     k = math.ceil((t - 2400) / 300)
     return f"{'OT' if k == 1 else f'OT{k}'} 残り{f(2400 + 300 * k - t)}"
 
