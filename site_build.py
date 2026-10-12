@@ -24,13 +24,13 @@ CSS = """
 :root{
   --lime:#8FC31F; --pine:#14290F; --snow:#F6F8F1; --frost:#DDE6D0; --moss:#56664F;
   --bg:var(--snow); --ink:var(--pine); --sub:var(--moss); --line:var(--frost);
-  --btn-bg:var(--pine); --btn-ink:var(--snow); --empty:#CFDAC0;
+  --btn-bg:var(--pine); --btn-ink:var(--snow); --empty:#CFDAC0; --card:#FFFFFF;
   --display:"Dela Gothic One","Hiragino Sans","Noto Sans JP",sans-serif;
   --body:"BIZ UDPGothic","Hiragino Sans","Noto Sans JP",sans-serif;
 }
 @media (prefers-color-scheme: dark){
   :root{ --bg:#0D1A0B; --ink:#E8F0DD; --sub:#9AAA90; --line:#24361F;
-         --btn-bg:#8FC31F; --btn-ink:#14290F; --empty:#2C4226; }
+         --btn-bg:#8FC31F; --btn-ink:#14290F; --empty:#2C4226; --card:#122310; }
 }
 *{box-sizing:border-box}
 html{-webkit-text-size-adjust:100%}
@@ -88,6 +88,12 @@ ul.games li{display:grid;grid-template-columns:76px 1fr auto;gap:12px;align-item
 .opp small{display:block;font-weight:400;font-size:13px;color:var(--sub)}
 .start{font-family:var(--display);font-size:16px}
 .links{margin-top:14px;display:flex;gap:10px;flex-wrap:wrap}
+.lead{margin:14px auto 0;font-size:14px;color:var(--sub)}
+.lead a{color:var(--ink);font-weight:700;margin-left:4px;white-space:nowrap}
+.sample{display:grid;gap:2px;max-width:420px;margin:12px 0 14px;padding:12px 14px;border-radius:14px;background:var(--card);border:1px solid var(--line);border-left:6px solid var(--lime);box-shadow:0 2px 8px rgba(20,41,15,.08);font-size:14px}
+.sample .app{font-size:11px;color:var(--sub)}
+dl.facts{display:grid;grid-template-columns:5.5em 1fr;gap:4px 10px;margin:0 0 10px;font-size:14px}
+dl.facts dt{color:var(--sub)}dl.facts dd{margin:0}
 .notify .row{display:flex;gap:10px;flex-wrap:wrap;margin-top:12px}
 .notify .btn[hidden]{display:none}
 footer{padding:40px 0 48px;font-size:12px;color:var(--sub)}
@@ -299,16 +305,26 @@ PUSH_ENABLED = os.environ.get("MIDOKORO_PUSH", "1") != "0"   # 受付窓口が�
 API_BASE = os.environ.get("MIDOKORO_API", "").rstrip("/")   # GitHub版：Cloudflareの受付窓口
 
 
+FACTS = ('<div class="sample" aria-label="通知の例"><span class="app">見どころなう</span>'
+         '<b>いま見て！ 佐賀戦</b><span>第4Q残り2分、1ポゼッション差。レバンガが逆転！</span></div>'
+         '<dl class="facts"><dt>届くとき</dt><dd>試合が接戦・逆転・終盤の山場になった瞬間</dd>'
+         '<dt>回数</dt><dd>{count}</dd>'
+         '<dt>中身</dt><dd>点数（スコア）は送りません。「逆転」「同点」など試合の流れは書きます</dd></dl>')
+
+
 def notify_block() -> str:
     line_url = os.environ.get("LINE_ADD_URL", "").strip()
     if not PUSH_ENABLED:                       # Webプッシュなし：LINEだけで受け取る
         line = _btn("LINEで受け取る", line_url) if line_url else ""
         say = ("試合が盛り上がったら、LINEでお知らせします（1試合1回）。このページは数分おきに更新されます。"
                if line_url else "このページは数分おきに更新されます。")
-        return ('<section class="notify"><div class="wrap"><h2>通知を受け取る</h2>'
+        return ('<section class="notify" id="notify"><div class="wrap"><h2>通知を受け取る</h2>'
+                + FACTS.format(count="LINEは1試合1回まで") +
                 f'<p class="note">{e(say)}</p><div class="row">{line}</div></div></section>')
     line = _btn("LINEで受け取る", line_url, quiet=True) if line_url else ""
-    return ('<section class="notify"><div class="wrap"><h2>通知を受け取る</h2>'
+    count = "この端末へは1試合おおむね1〜3回" + ("、LINEは1回まで" if line_url else "") + "。試合のない日は届きません"
+    return ('<section class="notify" id="notify"><div class="wrap"><h2>通知を受け取る</h2>'
+            + FACTS.format(count=count) +
             f'<p class="note" id="np" data-line="{1 if line_url else 0}">見どころが来た瞬間に、この端末へお知らせします。</p>'
             f'<div class="row"><button class="btn" id="nb" hidden>この端末に通知する</button>{line}</div>'
             '</div></section>')
@@ -331,6 +347,7 @@ PAGE = """<!doctype html>
 </head>
 <body data-api="{api}">
 <header class="site wrap"><h1 class="mark">見どころなう</h1><span class="edition">レバンガ北海道版（非公式）</span></header>
+<p class="lead wrap">試合を最初から見られなくても大丈夫。接戦・逆転・終盤の山場を判定して、「いま見て！」とお知らせします。<a href="#notify">通知を受け取る</a></p>
 <main>
 <div id="live">{hero}{moments}</div>
 {notify}
