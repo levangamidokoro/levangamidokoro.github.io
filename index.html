@@ -85,17 +85,17 @@ footer{padding:40px 0 48px;font-size:12px;color:var(--sub)}
 footer p{margin:0 0 6px}
 </style>
 </head>
-<body>
+<body data-api="https://midokoro-api.levangamidokoro.workers.dev">
 <header class="site wrap"><h1 class="mark">見どころなう</h1><span class="edition">レバンガ北海道版（非公式）</span></header>
 <main>
 <div id="live"><div class="hero"><div class="wrap"><p class="ctx">次の試合　vs 佐賀　アウェイ（佐賀県）</p><h2 class="word">10/16<span class="wd">金曜日</span></h2><p class="say">19:05開始。始まったら、見どころをお知らせします。</p></div></div><section><div class="wrap"><h2>前回の試合　10/10 千葉J戦</h2><div class="links"><a class="btn quiet" href="https://basketball.mb.softbank.jp/api/v1/video/highlight?game_id=506447&amp;utm_source=bleague&amp;utm_medium=bleague&amp;utm_campaign=bleague_bleague_032" target="_blank" rel="noopener">ハイライト動画を見る</a></div></div></section></div>
-<section class="notify"><div class="wrap"><h2>通知を受け取る</h2><p class="note">このページは数分おきに更新されます。</p><div class="row"></div></div></section>
+<section class="notify"><div class="wrap"><h2>通知を受け取る</h2><p class="note" id="np" data-line="0">見どころが来た瞬間に、この端末へお知らせします。</p><div class="row"><button class="btn" id="nb" hidden>この端末に通知する</button></div></div></section>
 <section><div class="wrap"><h2>この先の試合</h2><ul class="games"><li><span class="day">10/18<small>日曜日</small></span><span class="opp">vs 横浜BC<small>アウェイ（神奈川県）</small></span><span class="start">15:05</span></li><li><span class="day">10/21<small>水曜日</small></span><span class="opp">vs 富山<small>ホーム</small></span><span class="start">19:05</span></li><li><span class="day">10/24<small>土曜日</small></span><span class="opp">vs 広島<small>アウェイ（広島県）</small></span><span class="start">14:05</span></li><li><span class="day">10/31<small>土曜日</small></span><span class="opp">vs 茨城<small>アウェイ（茨城県）</small></span><span class="start">15:05</span></li></ul></div></section>
 </main>
 <footer class="wrap">
 <p>レバンガ北海道を応援する個人の非公式サービスです。B.LEAGUE・レバンガ北海道とは関係ありません。</p>
 <p>試合の映像と記録はB.LEAGUE公式でご覧ください。見どころの判定は試験運用中です。</p>
-<p>最終更新 2026-10-12 11:32</p>
+<p>最終更新 2026-10-12 12:46</p>
 </footer>
 <script>
 (() => {
@@ -121,7 +121,7 @@ footer p{margin:0 0 6px}
 (async () => {
   const msg = document.getElementById("np"), btn = document.getElementById("nb");
   if (!msg || !btn) return;
-  const API = "";
+  const API = document.body.dataset.api || "";
   const viaLine = msg.dataset.line === "1" ? "LINEで受け取れます。" : "";
   const ios = /iPhone|iPad|iPod/.test(navigator.userAgent);
   const standalone = matchMedia("(display-mode: standalone)").matches || navigator.standalone;
@@ -169,5 +169,5 @@ footer p{margin:0 0 6px}
     } finally { btn.disabled = false; }
   };
 })();
-</script>
+</script><script>try{navigator.sendBeacon(document.body.dataset.api+"/api/hit",new Blob(["{}"],{type:"text/plain"}))}catch(e){}</script>
 </body></html>
