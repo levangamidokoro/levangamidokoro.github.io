@@ -376,8 +376,10 @@ class Tracker:
         try:
             import push_api
             from site_build import heat_pct
+            from site_build import peak_pct
             push_api.post_live({"key": v["key"], "status": v["status"], "level": v["level"] or "", "meter": v["meter"],
-                                "pct": heat_pct(v["meter"]), "clock": v["clock"] or "", "text": v["text"] or "",
+                                "pct": heat_pct(v["meter"]), "peak": peak_pct(v.get("heat") or [], v["meter"]),
+                                "clock": v["clock"] or "", "text": v["text"] or "",
                                 "opponent": v["opponent"], "url": v["url"], "at": int(t.timestamp())})
             self._live_sent, self._live_at = sig, t
         except Exception as e:

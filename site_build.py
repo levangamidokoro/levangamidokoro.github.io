@@ -28,7 +28,7 @@ from datetime import datetime, timedelta, timezone
 from pathlib import Path
 from urllib.parse import quote
 
-from midokoro_score import HIGH
+from midokoro_score import BREAK, HIGH
 
 STATE_FILE = Path("data/state.json")
 OUT_DIR = Path("public")
@@ -54,13 +54,13 @@ CSS = """
 :root{
   --lime:#8FC31F; --pine:#14290F; --snow:#F6F8F1; --frost:#DDE6D0; --moss:#56664F; --mist:#C9D6BC; --board:#0B1909;
   --bg:var(--snow); --ink:var(--pine); --sub:var(--moss); --line:var(--frost); --card:#FFFFFF; --tile:var(--pine);
-  --series:#3F7A1A;
+  --series:#3F7A1A; --hot:#FFE14D; --hotline:#B87400;
   --display:"M PLUS 1","Hiragino Sans","Noto Sans JP",sans-serif;
   --num:"Anton","M PLUS 1",sans-serif;
   --body:"M PLUS 1","Hiragino Sans","Noto Sans JP",sans-serif;
 }
 @media (prefers-color-scheme: dark){
-  :root{ --bg:#0D1A0B; --ink:#E8F0DD; --sub:#9AAA90; --line:#24361F; --card:#122310; --tile:#1A3415; --series:#73A318; }
+  :root{ --bg:#0D1A0B; --ink:#E8F0DD; --sub:#9AAA90; --line:#24361F; --card:#122310; --tile:#1A3415; --series:#73A318; --hotline:#FFD43B; }
 }
 *{box-sizing:border-box}
 [hidden]{display:none!important}
@@ -125,6 +125,27 @@ body[data-pstate=on] .on-badge{display:inline-block}
 .panel.hot .gauge i.on{animation:glow 1.4s ease-in-out infinite}
 @keyframes glow{50%{background:#E4F7A8;box-shadow:0 0 16px rgba(228,247,168,.85)}}
 .panel .say{margin:12px 0 0;font-size:16px;font-weight:700}
+/* 激アツ：100%を超えたら、ゲージの枠を裂いて破片が飛び出す */
+.chip.geki{background:var(--hot);color:var(--pine)}
+.panel.burst{box-shadow:0 0 0 2px var(--hot),0 0 48px rgba(255,225,77,.42),0 18px 40px rgba(0,0,0,.3)}
+.panel.burst .word,.panel.burst .readout .goal{color:var(--hot)}
+.panel.burst:not(.still){animation:jolt .5s cubic-bezier(.3,1.6,.5,1) .7s both}
+@keyframes jolt{0%{transform:none}35%{transform:scale(1.035) rotate(-.8deg)}65%{transform:scale(.99) rotate(.5deg)}100%{transform:none}}
+.gauge-wrap{display:flex;align-items:stretch;gap:5px}
+.gauge-wrap .gauge{flex:20 1 0;min-width:0;box-shadow:inset 0 0 0 1px rgba(255,225,77,.6);
+  clip-path:polygon(0 0,calc(100% - 3px) 0,100% 16%,calc(100% - 7px) 33%,100% 50%,calc(100% - 4px) 68%,100% 84%,calc(100% - 6px) 100%,0 100%)}
+.gauge-wrap .gauge i.on{background:var(--hot);box-shadow:0 0 12px rgba(255,225,77,.85)}
+.panel.hot .gauge-wrap .gauge i.on{animation:glowhot 1.2s ease-in-out infinite}
+@keyframes glowhot{50%{background:#FFF6C2;box-shadow:0 0 18px rgba(255,246,194,.95)}}
+.shards{flex:var(--n) 1 0;min-width:0;display:flex;gap:3px;padding:5px 0}
+.shards i{flex:1;border-radius:2px;background:var(--hot);box-shadow:0 0 14px rgba(255,225,77,.9);
+  transform:translate(calc(var(--k) * 2px),calc(var(--k) * -5px)) rotate(calc(var(--k) * -11deg));opacity:calc(1 - var(--k) * .1)}
+.shards i:nth-child(3n+1){clip-path:polygon(0 8%,100% 0,86% 100%,6% 88%)}
+.shards i:nth-child(3n+2){clip-path:polygon(12% 0,100% 14%,92% 92%,0 100%)}
+.shards i:nth-child(3n){clip-path:polygon(0 0,88% 10%,100% 100%,10% 84%)}
+.panel:not(.still) .shards i{animation:shard .5s cubic-bezier(.2,.9,.3,1.2) both;animation-delay:calc(.75s + var(--k) * 70ms)}
+@keyframes shard{from{transform:translate(-26px,0) scale(.3);opacity:0}}
+.poster:has(.panel.hot.burst){background-image:radial-gradient(520px 360px at 72% 34%,rgba(255,225,77,.6),transparent 72%)}
 .panel .upd{margin-left:auto;font-size:12px;color:var(--mist);white-space:nowrap}
 .panel .quiet-note{margin:10px 0 0;font-size:14px;color:var(--mist)}
 .panel .btn{margin-top:14px}
@@ -203,7 +224,10 @@ h3.sub{font-size:14px;margin:24px 0 4px;color:var(--sub);font-weight:700}
 .toast .ap{display:flex;justify-content:space-between;font-size:11px;color:var(--sub)}
 .toast b{font-size:15px;font-weight:900}
 @keyframes drop{from{transform:translateY(-30px) scale(.96);opacity:0}to{transform:none;opacity:1}}
-.replay{justify-self:center}
+.replay{justify-self:center;display:block;margin:10px auto 0}
+.burst-demo{display:grid;gap:12px;justify-items:center;margin-top:30px}
+.burst-demo h3{margin:0;justify-self:start;font-family:var(--display);font-weight:900;font-size:18px}
+.burst-demo .panel{width:100%;max-width:470px}
 
 /* 熱さの推移（折れ線） */
 .curve{margin:0;padding:14px 14px 12px;border-radius:16px;background:var(--card);box-shadow:0 0 0 1px var(--line)}
@@ -214,14 +238,18 @@ h3.sub{font-size:14px;margin:24px 0 4px;color:var(--sub);font-weight:700}
 .plot{position:relative;display:grid;grid-template-columns:34px 1fr;grid-template-rows:auto 20px;margin-top:22px}
 .ylab{position:relative}
 .ylab span{position:absolute;right:6px;transform:translateY(-50%);font-size:11px;color:var(--sub);line-height:1}
-.area{position:relative;height:150px;touch-action:pan-y;outline-offset:6px}
-@media (min-width:600px){.area{height:180px}}
+.area{--h:150px;--top:100;position:relative;height:calc(var(--h) * var(--top) / 100);touch-action:pan-y;outline-offset:6px}
+@media (min-width:600px){.area{--h:180px}}
+.area .hotband{fill:var(--hotline);opacity:.08}
+.area .crack{fill:none;stroke:var(--hotline);stroke-width:2;stroke-linejoin:round;vector-effect:non-scaling-stroke}
+.blabel{position:absolute;transform:translate(-50%,-135%);padding:1px 9px;border-radius:999px;background:var(--hot);color:var(--pine);
+        font-size:12px;font-weight:900;white-space:nowrap;box-shadow:0 2px 8px rgba(0,0,0,.18)}
 .area svg{position:absolute;inset:0;width:100%;height:100%;overflow:visible}
 .area .gl{stroke:var(--line);stroke-width:1;vector-effect:non-scaling-stroke}
 .area .full{stroke:var(--sub);stroke-width:1;vector-effect:non-scaling-stroke}
 .area .ln{fill:none;stroke:var(--series);stroke-width:2;stroke-linejoin:round;stroke-linecap:round;vector-effect:non-scaling-stroke}
 .area .ar{fill:var(--series);opacity:.1}
-.flabel{position:absolute;left:0;top:-18px;font-size:11px;color:var(--sub);white-space:nowrap}
+.flabel{position:absolute;left:0;font-size:11px;color:var(--sub);white-space:nowrap}
 .mk,.fd{position:absolute;width:10px;height:10px;margin:-5px 0 0 -5px;border-radius:50%;background:var(--series);box-shadow:0 0 0 2px var(--card)}
 .fd{width:12px;height:12px;margin:-6px 0 0 -6px}
 .xh{position:absolute;top:0;bottom:0;width:1px;background:var(--sub)}
@@ -253,6 +281,7 @@ ol.flow li{position:relative;display:grid;grid-template-columns:40px 1fr;gap:14p
 ol.flow .dot{position:relative;z-index:1;width:40px;height:40px;border-radius:50%;display:grid;place-items:center;
              background:var(--bg);box-shadow:inset 0 0 0 3px var(--line);font-weight:900;font-size:17px;color:var(--sub)}
 ol.flow li.hot .dot{background:var(--lime);box-shadow:none;color:var(--pine)}
+ol.flow li.geki .dot{background:var(--hot);font-size:15px}
 ol.flow .when{display:block;font-size:12px;font-weight:700;color:var(--sub)}
 ol.flow b{display:block;font-size:16px;line-height:1.5}
 ol.flow p{margin:2px 0 0;font-size:14px;color:var(--sub)}
@@ -561,7 +590,7 @@ const mdClock = (() => {
   const init = (plot) => {
     if (plot.dataset.ready) return;
     plot.dataset.ready = "1";
-    const d = JSON.parse(plot.dataset.curve), pts = d.pts, xmax = d.xmax;
+    const d = JSON.parse(plot.dataset.curve), pts = d.pts, xmax = d.xmax, top = d.top || 100;
     const area = plot.querySelector(".area"), xh = area.querySelector(".xh"), fd = area.querySelector(".fd"), tip = area.querySelector(".tip");
     if (!pts.length) return;
     let idx = pts.length - 1;
@@ -569,8 +598,8 @@ const mdClock = (() => {
       idx = Math.max(0, Math.min(pts.length - 1, i));
       const [t, v] = pts[idx], x = (t / xmax) * 100;
       xh.style.left = fd.style.left = x + "%";
-      fd.style.top = (100 - v) + "%";
-      tip.querySelector("b").textContent = `熱さ ${v}%`;
+      fd.style.top = ((top - v) / top * 100) + "%";
+      tip.querySelector("b").textContent = v > 100 ? `熱さ ${v}%（激アツ）` : `熱さ ${v}%`;
       tip.querySelector("span").textContent = label(t);
       tip.style.left = Math.min(86, Math.max(14, x)) + "%";
       xh.hidden = fd.hidden = tip.hidden = false;
@@ -604,23 +633,28 @@ const mdClock = (() => {
   const box = () => document.getElementById("live-top");
   const esc = (v) => String(v == null ? "" : v).replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
   let last = null;
-  const segs = (pct) => {
-    const lit = Math.floor(pct * 20 / 100); let h = "";
-    for (let i = 0; i < 20; i++) h += i < lit ? `<i class="on${i === lit - 1 && lit < 20 ? " lead" : ""}" style="--i:${i}"></i>` : `<i style="--i:${i}"></i>`;
-    return h;
+  const gaugeHTML = (pct) => {                       // サーバー側の gauge() と同じ形
+    const lit = Math.floor(Math.min(pct, 100) * 20 / 100); let s = "";
+    for (let i = 0; i < 20; i++) s += i < lit ? `<i class="on${i === lit - 1 && lit < 20 ? " lead" : ""}" style="--i:${i}"></i>` : `<i style="--i:${i}"></i>`;
+    const bar = `<div class="gauge" role="meter" aria-valuemin="0" aria-valuemax="${Math.max(100, pct)}" aria-valuenow="${pct}" aria-label="熱さ ${pct}%（100%で通知、100%を超えると激アツ）">${s}</div>`;
+    if (pct <= 100) return bar;
+    const n = Math.min(8, Math.ceil((pct - 100) / 10)); let sh = "";
+    for (let k = 0; k < n; k++) sh += `<i style="--k:${k}"></i>`;
+    return `<div class="gauge-wrap" style="--n:${n}">${bar}<div class="shards" aria-hidden="true">${sh}</div></div>`;
   };
-  const render = (d) => {
-    const hot = d.level === "高", pct = Math.max(0, Math.min(100, d.pct | 0));
-    const word = hot ? "いま見て！" : d.level === "中" ? "そろそろ" : "まだ大丈夫";
-    const goal = hot ? "満タン！" : `満タンまで あと${100 - pct}%`;
+  const render = (d, animate) => {
+    const pct = Math.max(0, Math.min(300, d.pct | 0)), peak = Math.max(pct, d.peak | 0);
+    const hot = d.level === "高", burst = pct > 100;
+    const word = burst ? "激アツ！" : hot ? "いま見て！" : d.level === "中" ? "そろそろ" : "まだ大丈夫";
+    const goal = burst ? "ゲージを突き破った！" : hot ? "満タン！" : `満タンまで あと${100 - pct}%`;
     const say = d.text || (hot ? "" : "ゲージが満タンになったら、すぐにお知らせします。");
     const tm = new Date(d.at * 1000).toLocaleTimeString("ja-JP", { timeZone: "Asia/Tokyo", hour: "2-digit", minute: "2-digit", second: "2-digit" });
-    return `<div class="panel still${hot ? " hot" : ""}" data-at="${d.at}" data-livekey="${esc(d.key)}">` +
-      `<p class="ctx"><span class="chip live">試合中</span>${d.clock ? `<span>${esc(mdClock.nice(d.clock))}</span>` : ""}` +
-      `<span>vs ${esc(d.opponent)}</span><span class="upd">${tm}時点</span></p>` +
+    return `<div class="panel${animate ? "" : " still"}${hot ? " hot" : ""}${burst ? " burst" : ""}" data-at="${d.at}" data-livekey="${esc(d.key)}">` +
+      `<p class="ctx"><span class="chip live">試合中</span>${peak > 100 ? '<span class="chip geki">激アツ試合</span>' : ""}` +
+      `${d.clock ? `<span>${esc(mdClock.nice(d.clock))}</span>` : ""}<span>vs ${esc(d.opponent)}</span><span class="upd">${tm}時点</span></p>` +
       `<p class="word">${word}</p>` +
       `<p class="readout"><span class="lbl">熱さ</span><span class="fig">${pct}<small>%</small></span><span class="goal">${goal}</span></p>` +
-      `<div class="gauge" role="meter" aria-valuemin="0" aria-valuemax="100" aria-valuenow="${pct}" aria-label="熱さ ${pct}%（100%で通知）">${segs(pct)}</div>` +
+      gaugeHTML(pct) +
       (say ? `<p class="say">${esc(say)}</p>` : "") +
       (d.url ? `<a class="btn${hot ? "" : " quiet"}" href="${esc(d.url)}" target="_blank" rel="noopener">試合を見る（B.LEAGUE公式）</a>` : "") + "</div>";
   };
@@ -629,9 +663,11 @@ const mdClock = (() => {
     if (!p || !last || p.dataset.livekey !== String(last.key) || +p.dataset.at >= last.at) return;
     if (last.status === "終了") { dispatchEvent(new Event("midokoro:refresh")); return; }
     if (last.status !== "試合中") return;
-    b.innerHTML = render(last);
-    document.title = last.level === "高" ? `いま見て！ レバンガ vs ${last.opponent}（熱さ100%）｜見どころなう（非公式）`
-                                         : `熱さ${last.pct}% レバンガ vs ${last.opponent}｜見どころなう（非公式）`;
+    const was = !!b.querySelector(".panel.burst");
+    b.innerHTML = render(last, last.pct > 100 && !was);   // 突き破った瞬間だけ、破片が飛ぶ
+    document.title = last.pct > 100 ? `激アツ！ レバンガ vs ${last.opponent}（熱さ${last.pct}%）｜見どころなう（非公式）`
+      : last.level === "高" ? `いま見て！ レバンガ vs ${last.opponent}（熱さ100%）｜見どころなう（非公式）`
+      : `熱さ${last.pct}% レバンガ vs ${last.opponent}｜見どころなう（非公式）`;
   };
   async function poll() {
     if (document.hidden || !document.querySelector("#live-top .panel[data-livekey]")) return;
@@ -667,8 +703,16 @@ const mdClock = (() => {
     if (es.some((x) => x.isIntersecting)) { io.disconnect(); run(); }
   }, { threshold: 0.6 });
   io.observe(demo);
+  const bd = document.querySelector("[data-burst-demo] .panel");
+  const runBurst = () => { if (!bd) return; bd.classList.add("still"); void bd.offsetWidth; bd.classList.remove("still"); };
+  if (bd) {
+    const io2 = new IntersectionObserver((es) => {
+      if (es.some((x) => x.isIntersecting)) { io2.disconnect(); runBurst(); }
+    }, { threshold: 0.6 });
+    io2.observe(bd);
+  }
   const again = document.querySelector("[data-demo-replay]");
-  if (again) { again.hidden = false; again.addEventListener("click", run); }
+  if (again) { again.hidden = false; again.addEventListener("click", () => { run(); setTimeout(runBurst, 1800); }); }
 })();
 """
 
@@ -691,10 +735,29 @@ SHARE_ICON = ('<svg class="shareico" viewBox="0 0 24 24" fill="none" stroke="cur
 # ---------- 熱さ ----------
 
 def heat_pct(score: int | float | None) -> int:
-    """見どころ度 → 熱さ（%）。通知ライン（HIGH）で満タンの100%"""
+    """見どころ度 → 熱さ（%）。通知ライン（HIGH＝70）で満タンの100%。満タンのあとは100%のまま。
+       見どころ度が BREAK（100）に届くと、100%を超えて表示する（ゲージを突き破る＝激アツ）"""
     if score is None:
         return 0
-    return max(0, min(100, math.floor(score * 100 / HIGH)))
+    raw = math.floor(score * 100 / HIGH)
+    return max(0, raw) if score >= BREAK else max(0, min(100, raw))
+
+
+def peak_pct(heat: list, *more) -> int:
+    """推移（とほかの見どころ度）から、熱さの最高値"""
+    vals = [heat_pct(s) for _, s in heat] + [heat_pct(m) for m in more if m is not None]
+    return max(vals, default=0)
+
+
+def burst_moments(heat: list) -> list[int]:
+    """ゲージを突き破った瞬間（100%を超える区間の最初）"""
+    out, prev = [], False
+    for t, s in heat:
+        b = heat_pct(s) > 100
+        if b and not prev:
+            out.append(int(t))
+        prev = b
+    return out
 
 
 def clock_label(t: float) -> str:
@@ -748,13 +811,22 @@ def full_moments(heat: list) -> list[int]:
     return out
 
 
+GEKI_CHIP = '<span class="chip geki">激アツ試合</span>'
+
+
 def gauge(pct: int, extra: str = "") -> str:
-    lit = pct * SEGMENTS // 100
+    """20目盛りのゲージ。100%を超えた分は、枠を突き破って飛び出す破片（10%ごとに1片、最大8片）"""
+    lit = min(pct, 100) * SEGMENTS // 100
     segs = "".join(
         (f'<i class="on{" lead" if i == lit - 1 and lit < SEGMENTS else ""}" style="--i:{i}"></i>' if i < lit
          else f'<i style="--i:{i}"></i>') for i in range(SEGMENTS))
-    return (f'<div class="gauge{extra}" role="meter" aria-valuemin="0" aria-valuemax="100" aria-valuenow="{pct}" '
-            f'aria-label="熱さ {pct}%（100%で通知）">{segs}</div>')
+    bar = (f'<div class="gauge{extra}" role="meter" aria-valuemin="0" aria-valuemax="{max(100, pct)}" aria-valuenow="{pct}" '
+           f'aria-label="熱さ {pct}%（100%で通知、100%を超えると激アツ）">{segs}</div>')
+    if pct <= 100:
+        return bar
+    n = min(8, math.ceil((pct - 100) / 10))
+    shards = "".join(f'<i style="--k:{k}"></i>' for k in range(n))
+    return f'<div class="gauge-wrap" style="--n:{n}">{bar}<div class="shards" aria-hidden="true">{shards}</div></div>'
 
 
 def readout(pct: int, label: str = "熱さ", goal: str = "満タンで通知", attr: str = "") -> str:
@@ -805,8 +877,8 @@ def _nextgame(g: dict, chip: str, updated: str | None) -> str:
             f'<p class="vs">vs {e(g["opponent"])}<small>{e(g["place"])}</small></p></div>')
 
 
-def _panel(inner: str, hot: bool = False, attrs: str = "") -> str:
-    return f'<div class="panel{" hot" if hot else ""}"{attrs}>{inner}</div>'
+def _panel(inner: str, hot: bool = False, attrs: str = "", burst: bool = False) -> str:
+    return f'<div class="panel{" hot" if hot else ""}{" burst" if burst else ""}"{attrs}>{inner}</div>'
 
 
 def panel(state: dict) -> tuple[str, str]:
@@ -819,19 +891,21 @@ def panel(state: dict) -> tuple[str, str]:
     live_attrs = f' data-at="{at}" data-livekey="{e(g["key"])}"' if g and API_BASE else ""
     if g and g["status"] == "試合中":
         lv, clock, pct = g.get("level"), g.get("clock"), heat_pct(g.get("meter"))
-        hot = lv == "高"
-        ctx = (f'<p class="ctx"><span class="chip live">試合中</span>'
+        peak = peak_pct(g.get("heat") or [], g.get("meter"))
+        hot, burst = lv == "高", pct > 100
+        ctx = (f'<p class="ctx"><span class="chip live">試合中</span>{GEKI_CHIP if peak > 100 else ""}'
                f'{f"<span>{e(nice_clock(clock))}</span>" if clock else ""}<span>vs {e(g["opponent"])}</span>'
                f'<span class="upd">{e((up or "")[11:16])}時点</span></p>')
-        word = "いま見て！" if hot else ("そろそろ" if lv == "中" else "まだ大丈夫")
-        goal = "満タン！" if hot else f"満タンまで あと{100 - pct}%"
+        word = "激アツ！" if burst else "いま見て！" if hot else ("そろそろ" if lv == "中" else "まだ大丈夫")
+        goal = "ゲージを突き破った！" if burst else "満タン！" if hot else f"満タンまで あと{100 - pct}%"
         say = g.get("text") or ("" if hot else "ゲージが満タンになったら、すぐにお知らせします。")
         inner = (f'{ctx}<p class="word">{word}</p>{readout(pct, goal=goal)}{gauge(pct)}'
                  f'{f"<p class=say>{e(say)}</p>" if say else ""}'
                  f'{_btn("試合を見る（B.LEAGUE公式）", g["url"], quiet=not hot)}')
-        title = (f'いま見て！ レバンガ vs {g["opponent"]}（熱さ100%）｜見どころなう（非公式）' if hot
+        title = (f'激アツ！ レバンガ vs {g["opponent"]}（熱さ{pct}%）｜見どころなう（非公式）' if burst
+                 else f'いま見て！ レバンガ vs {g["opponent"]}（熱さ100%）｜見どころなう（非公式）' if hot
                  else f'熱さ{pct}% レバンガ vs {g["opponent"]}｜見どころなう（非公式）')
-        return _panel(inner, hot, live_attrs), title
+        return _panel(inner, hot, live_attrs, burst), title
     if g and g["status"] in ("予定", "まもなく"):
         chip = "まもなく試合開始" if g["status"] == "まもなく" else "今日の試合"
         inner = (f'{_nextgame(g, chip, up)}{readout(0, goal="満タンで通知")}{gauge(0)}'
@@ -841,9 +915,12 @@ def panel(state: dict) -> tuple[str, str]:
         return _panel(inner, attrs=live_attrs if soon else ""), TITLE   # 開始1時間前から、いまの熱さを読みにいく
     if g and g["status"] == "終了":
         heat = g.get("heat") or []
-        peak = heat_pct(max((s for _, s in heat), default=0))
+        peak = peak_pct(heat)
+        geki = peak > 100
         n = len(g["alerts"])
-        if n:
+        if geki:
+            say = f"熱さが{peak}%まで上がり、ゲージを突き破った激アツ試合でした。" + (f"「いま見て！」は{n}回お知らせしました。" if n else "")
+        elif n:
             say = f"ゲージが満タンになり、「いま見て！」を{n}回お知らせしました。"
         elif g.get("tracked"):
             say = "この試合は、ゲージが満タンになる場面はありませんでした。"
@@ -851,11 +928,12 @@ def panel(state: dict) -> tuple[str, str]:
             say = ""
         link = (_btn("ハイライト動画を見る", g.get("highlight"))
                 or _btn("試合の記録を見る（B.LEAGUE公式）", g["url"], quiet=True))
-        inner = (f'<p class="ctx"><span class="chip">試合終了</span><span>vs {e(g["opponent"])}</span></p>'
-                 f'<p class="word">試合終了</p>'
-                 f'{readout(peak, label="この試合の最高", goal="満タン＝通知") if heat else ""}{gauge(peak) if heat else ""}'
+        inner = (f'<p class="ctx"><span class="chip">試合終了</span>{GEKI_CHIP if geki else ""}<span>vs {e(g["opponent"])}</span></p>'
+                 f'<p class="word">{"激アツ試合" if geki else "試合終了"}</p>'
+                 f'{readout(peak, label="この試合の最高", goal="ゲージを突き破った！" if geki else "満タン＝通知") if heat else ""}'
+                 f'{gauge(peak) if heat else ""}'
                  f'{f"<p class=say>{e(say)}</p>" if say else ""}{link}')
-        return _panel(inner), TITLE
+        return _panel(inner, burst=geki), TITLE
     nxt = (state.get("next") or [None])[0]
     if nxt:
         inner = (f'{_nextgame(nxt, "次の試合", up)}{readout(0, goal="満タンで通知")}{gauge(0)}'
@@ -866,41 +944,80 @@ def panel(state: dict) -> tuple[str, str]:
                   f'{readout(0, goal="満タンで通知")}{gauge(0)}'), TITLE
 
 
+_chart_no = 0
+
+
 def heat_chart(heat: list, marks: list[int], title: str, key: str) -> str:
-    """熱さの推移の折れ線（1系列）。marks は●を付ける経過秒"""
+    """熱さの推移の折れ線（1系列）。marks は●を付ける経過秒。
+       100%を超えたら、100%の線を裂いて上に突き抜ける（線は100%より上で熱い色に変わる）"""
+    global _chart_no
     if not heat:
         return ""
+    _chart_no += 1
+    gid = f"hg{_chart_no}"
     end = max(t for t, _ in heat)
     xmax = 2400 if end <= 2400 else 2400 + 300 * math.ceil((end - 2400) / 300)
     pts = [[min(int(t), xmax), heat_pct(s)] for t, s in bin_heat(heat)]
+    peak = max(v for _, v in pts)
+    top = 100 if peak <= 100 else int(math.ceil(peak / 10) * 10)
     X = lambda t: 1000 * t / xmax
-    line = "M0,100 " + " ".join(f"L{X(t):.1f},{100 - v}" for t, v in pts)
-    area = f"{line} L{X(pts[-1][0]):.1f},100 Z"
+    Y = lambda v: top - v
+    P = lambda v: f"{100 * (top - v) / top:.2f}%"                # 上からの位置
+    line = f"M0,{top} " + " ".join(f"L{X(t):.1f},{Y(v)}" for t, v in pts)
+    area = f"{line} L{X(pts[-1][0]):.1f},{top} Z"
     quarters = [600, 1200, 1800] + list(range(2400, xmax, 300))   # クォーターの区切り（延長は5分ごと）
-    vlines = "".join(f'<line class="gl" x1="{X(t):.1f}" x2="{X(t):.1f}" y1="0" y2="100"/>' for t in quarters)
+    vlines = "".join(f'<line class="gl" x1="{X(t):.1f}" x2="{X(t):.1f}" y1="0" y2="{top}"/>' for t in quarters)
     names = ["1Q", "2Q", "3Q", "4Q"] + [("OT" if k == 1 else f"OT{k}") for k in range(1, (xmax - 2400) // 300 + 1)]
     bounds = [0, 600, 1200, 1800, 2400] + list(range(2700, xmax + 1, 300))
     xlab = "".join(f'<span style="left:{100 * (a + b) / 2 / xmax:.2f}%">{n}</span>'
                    for n, a, b in zip(names, bounds, bounds[1:]))
-    dots = "".join(f'<span class="mk" style="left:{100 * t / xmax:.2f}%;top:0%" title="{e(clock_label(t))} 満タン"></span>'
+    bursts = burst_moments(heat)
+    y100 = Y(100)
+    gaps, segs, x0 = sorted(X(t) for t in bursts), [], 0.0      # 100%の線：突き破った所だけ裂け目にする
+    for gx in gaps:
+        a0, b0 = max(0.0, gx - 14), min(1000.0, gx + 14)
+        if a0 > x0:
+            segs.append((x0, a0))
+        x0 = max(x0, b0)
+    if x0 < 1000:
+        segs.append((x0, 1000.0))
+    full = "".join(f'<line class="full" x1="{a0:.1f}" x2="{b0:.1f}" y1="{y100}" y2="{y100}"/>' for a0, b0 in segs)
+    amp = round(top * 0.03, 1)
+    cracks = "".join(f'<path class="crack" d="M{gx - 14:.1f},{y100} l5,{-amp} l5,{2 * amp} l6,{-2 * amp} l6,{2 * amp} l6,{-amp}"/>'
+                     for gx in gaps)
+    hot = top > 100
+    off = (top - 100) / top
+    defs = (f'<defs><linearGradient id="{gid}" gradientUnits="userSpaceOnUse" x1="0" y1="0" x2="0" y2="{top}">'
+            f'<stop offset="{off:.4f}" style="stop-color:var(--hotline)"/><stop offset="{off:.4f}" style="stop-color:var(--series)"/>'
+            '</linearGradient></defs>') if hot else ""
+    band = f'<rect class="hotband" x="0" y="0" width="1000" height="{top - 100}"/>' if hot else ""
+    ln_style = f' style="stroke:url(#{gid})"' if hot else ""
+    ar_style = f' style="fill:url(#{gid})"' if hot else ""
+    dots = "".join(f'<span class="mk" style="left:{100 * t / xmax:.2f}%;top:{P(100)}" title="{e(clock_label(t))}"></span>'
                    for t in marks if 0 <= t <= xmax)
-    peak_v = max(v for _, v in pts)
-    first_full = marks[0] if marks else None
-    aria = (f"熱さの推移。{clock_label(first_full)}にゲージが満タン。" if first_full is not None
-            else f"熱さの推移。最高{peak_v}%。")
+    blabel = (f'<span class="blabel" style="left:{min(88, max(12, 100 * bursts[0] / xmax)):.2f}%;top:{P(peak)}">激アツ {peak}%</span>'
+              if bursts else "")
+    ytop = f'<span style="top:0%">{top}%</span>' if hot else ""
+    if bursts:
+        aria = f"熱さの推移。{clock_label(bursts[0])}に100%を超えてゲージを突き破り、最高{peak}%の激アツ試合。"
+    elif marks:
+        aria = f"熱さの推移。{clock_label(marks[0])}にゲージが満タン。"
+    else:
+        aria = f"熱さの推移。最高{peak}%。"
     rows = "".join(f"<tr><td>{e(clock_label(t))}</td><td>{v}%</td></tr>" for t, v in pts)
-    data = e(json.dumps({"pts": pts, "xmax": xmax}, separators=(",", ":")))
-    return (f'<figure class="curve"><figcaption><b>{e(title)}</b>'
+    data = e(json.dumps({"pts": pts, "xmax": xmax, "top": top}, separators=(",", ":")))
+    return (f'<figure class="curve{" geki" if bursts else ""}"><figcaption><b>{e(title)}</b>'
             f'{f"<span class=key><i></i>{e(key)}</span>" if marks else ""}</figcaption>'
             f'<div class="plot" data-curve="{data}">'
-            '<div class="ylab"><span style="top:0%">100%</span><span style="top:50%">50%</span><span style="top:100%">0%</span></div>'
-            f'<div class="area" tabindex="0" role="img" aria-label="{e(aria)}">'
-            '<svg viewBox="0 0 1000 100" preserveAspectRatio="none" aria-hidden="true">'
-            '<line class="gl" x1="0" x2="1000" y1="50" y2="50"/><line class="gl" x1="0" x2="1000" y1="100" y2="100"/>'
-            f'{vlines}<line class="full" x1="0" x2="1000" y1="0" y2="0"/>'
-            f'<path class="ar" d="{area}"/><path class="ln" d="{line}"/></svg>'
-            '<span class="flabel">満タン（通知）</span>'
-            f'{dots}<span class="xh" hidden></span><span class="fd" hidden></span>'
+            f'<div class="ylab">{ytop}<span style="top:{P(100)}">100%</span><span style="top:{P(50)}">50%</span>'
+            f'<span style="top:100%">0%</span></div>'
+            f'<div class="area" style="--top:{top}" tabindex="0" role="img" aria-label="{e(aria)}">'
+            f'<svg viewBox="0 0 1000 {top}" preserveAspectRatio="none" aria-hidden="true">{defs}{band}'
+            f'<line class="gl" x1="0" x2="1000" y1="{Y(50)}" y2="{Y(50)}"/><line class="gl" x1="0" x2="1000" y1="{top}" y2="{top}"/>'
+            f'{vlines}{full}{cracks}'
+            f'<path class="ar" d="{area}"{ar_style}/><path class="ln" d="{line}"{ln_style}/></svg>'
+            f'<span class="flabel" style="top:calc({P(100)} - 18px)">満タン（通知）</span>'
+            f'{dots}{blabel}<span class="xh" hidden></span><span class="fd" hidden></span>'
             '<div class="tip" hidden><b></b><span></span></div></div>'
             f'<div class="xlab">{xlab}</div></div>'
             f'<details class="tbl"><summary>表で見る</summary><table><thead><tr><th>試合時間</th><th>熱さ</th></tr></thead>'
@@ -934,7 +1051,8 @@ def today_section(state: dict) -> str:
     chart = heat_chart(heat, _alert_marks(g), f'今日の熱さの推移　vs {g["opponent"]}',
                        "「いま見て！」をお知らせした場面")
     body = _list(g["alerts"], g.get("plays") or [], "" if heat else "ゲージが満タンになったら、ここに残ります。")
-    return f'<section><div class="wrap"><h2>今日の試合の熱さ</h2>{chart}{body}</div></section>'
+    head = "今日の試合は激アツ！" if peak_pct(heat, g.get("meter")) > 100 else "今日の試合の熱さ"
+    return f'<section><div class="wrap"><h2>{head}</h2>{chart}{body}</div></section>'
 
 
 def last_section(state: dict) -> str:
@@ -952,8 +1070,11 @@ def last_section(state: dict) -> str:
         return f'<section><div class="wrap"><h2>前回の試合</h2><p class="note">{e(meta)}</p>{links}</div></section>'
     tracked = bool(g.get("tracked"))
     marks = _alert_marks(g) if tracked else full_moments(heat)
-    peak = max(heat_pct(s) for _, s in heat)
-    if marks:
+    peak = peak_pct(heat)
+    bursts = burst_moments(heat)
+    if bursts:
+        head = f'前回の{g["opponent"]}戦は、激アツ試合'
+    elif marks:
         head = f'前回の{g["opponent"]}戦は、{clock_label(marks[0])}にゲージが満タン'
     else:
         head = f'前回の{g["opponent"]}戦は、最高{peak}%でした'
@@ -992,7 +1113,7 @@ def first_view(state: dict) -> tuple[str, str]:
             '<h1 class="hook"><span>レバンガ北海道の試合、</span><span>いまどれくらい熱い？</span></h1></div>'
             f'<div class="now" id="live-top" data-live>{top}</div>'
             '<div class="text"><p class="hook-sub">接戦・逆転・終盤の山場ほど、ゲージがたまります。'
-            '満タンになったら、スマホに「いま見て！」が届きます。</p></div>'
+            '満タンになったらスマホに「いま見て！」が届き、100%を超えたら激アツ試合です。</p></div>'
             f'{cta()}</div>'), title
 
 
@@ -1002,8 +1123,13 @@ def demo() -> str:
             '<figure class="phone"><div class="toast"><span class="ic" aria-hidden="true">見</span>'
             '<span class="ap"><span>見どころなう</span><span>いま</span></span>'
             '<b>いま見て！ 佐賀戦</b><span>第4Q残り38秒、1ポゼッション差。レバンガが勝ち越し！</span></div>'
-            '<figcaption>通知のイメージ</figcaption></figure>'
-            '<button class="link replay" type="button" data-demo-replay hidden>もう一度見る</button></div></div></section>')
+            '<figcaption>通知のイメージ</figcaption></figure></div>'
+            '<div class="burst-demo" data-burst-demo><h3>100%を超えると、激アツ試合</h3>'
+            f'<div class="panel burst still"><p class="ctx">{GEKI_CHIP}</p><p class="word">激アツ！</p>'
+            f'{readout(157, goal="ゲージを突き破った！")}{gauge(157)}</div>'
+            '<p class="note">残り3分を切ってからの1ポゼッション差の逆転や、延長戦の競り合いなど、ふつうの接戦よりさらに熱い場面で、'
+            'ゲージを突き破ります（画面はイメージ）。</p></div>'
+            '<button class="link replay" type="button" data-demo-replay hidden>もう一度見る</button></div></section>')
 
 
 FIT = ('<section><div class="wrap"><h2>こんなレバンガファンに</h2><ul class="fit">'
@@ -1028,6 +1154,8 @@ FLOW = ('<section><div class="wrap"><h2>試合の日、ゲージはこう動く<
         '<b>接戦なら一気にたまる</b><p>逆転・同点や、競ったまま残り3分に入ると満タンに。「いま見て！」が届きます。</p></div></li>'
         '<li class="hot"><span class="dot" aria-hidden="true">!</span><div><span class="when">最後の1分</span>'
         '<b>土壇場も、もう一度</b><p>満タンのまま終了間際に逆転・同点・勝ち越しがあれば、改めてお知らせします。</p></div></li>'
+        '<li class="hot geki"><span class="dot" aria-hidden="true">!!</span><div><span class="when">さらに熱くなると</span>'
+        '<b>ゲージを突き破って、激アツ試合に</b><p>残り3分を切ってからの1ポゼッション差の逆転や、延長戦の競り合いでは、熱さが100%を超えます。</p></div></li>'
         '<li><span class="dot" aria-hidden="true">✓</span><div><span class="when">試合のあと</span>'
         '<b>熱さの推移が残ります</b><p>このページで、試合のどこが熱かったかを振り返れます。</p></div></li>'
         '</ol><p class="fine">通知をタップすると、B.LEAGUE公式の試合ページが開きます。</p></div></section>')
@@ -1063,12 +1191,16 @@ def share() -> str:
 
 FAQ_ITEMS = [
     ("熱さゲージとは何ですか？",
-     "点差・残り時間・逆転や同点などの試合の流れから、いまどれくらい盛り上がっているかを0〜100%で表したものです。"
-     "100%（満タン）になると「いま見て！」をお知らせします。"),
+     "点差・残り時間・逆転や同点などの試合の流れから、いまどれくらい盛り上がっているかを表したものです。"
+     "100%（満タン）になると「いま見て！」をお知らせします。さらに熱くなって100%を超えると「激アツ」です。"),
     ("無料ですか？", "はい、無料です。会員登録やアプリのインストールもいりません。"),
     ("どんなときに通知が届きますか？",
      "熱さゲージが満タンになったときです。満タンになるのは第4Qと延長戦の接戦で、逆転・同点になったときや、"
      "競ったまま残り3分に入ったときなどです。1試合おおむね1〜3回で、大差の試合や試合のない日は届きません。"),
+    ("激アツ試合とは何ですか？",
+     "熱さが100%を超えて、ゲージを突き破った試合です。残り3分を切ってからの1ポゼッション差の逆転や、延長戦の競り合いなど、"
+     "ふつうの接戦よりさらに熱い場面で起きます。過去の試合で試すと、ふつうの試合では7試合に1試合ほど、"
+     "B.LEAGUEが特別なハイライトを作った劇的な試合では6割ほどが激アツ試合でした。"),
     ("ゲージはどれくらいの間隔で動きますか？",
      ("試合中は、20秒ほどの間隔で動きます。通知は、満タンになった直後に届きます。" if API_BASE else
       "試合中、このページのゲージは数分おきに新しくなります。通知は、満タンになった直後に届きます。")),

@@ -223,7 +223,7 @@ function cleanLive(r) {                    // 決まった項目だけを、長�
   const url = /^https:\/\/www\.bleague\.jp\//.test(String(r.url || "")) ? str(r.url, 200) : "";
   const level = ["高", "中", "低"].includes(r.level) ? r.level : "";
   if (!key) return null;
-  return { key, status: str(r.status, 10), level, meter: int(r.meter, 0, 100), pct: int(r.pct, 0, 100),
+  return { key, status: str(r.status, 10), level, meter: int(r.meter, 0, 200), pct: int(r.pct, 0, 300), peak: int(r.peak, 0, 300),
            clock: str(r.clock, 20), text: str(r.text, 200), opponent: str(r.opponent, 20), url,
            at: int(r.at, 0, 4102444800) || Math.floor(Date.now() / 1000) };
 }

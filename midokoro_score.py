@@ -13,12 +13,13 @@ v1.2の変更（公式YouTubeハイライト20試合・1,821得点プレーの�
 過去60試合の再生テスト（v1.2、2026-10-11）：通知は1試合平均1.23回、最終5点差以内の23試合すべてで通知、20点差以上の13試合は0件
 
 入力：公式サイトが使うプレー記録（PlayByPlays）と、レバンガがホームかどうか
-出力：見どころ度（0〜100）、レベル（高・中・低）、試合時間、説明文
+出力：見どころ度（0〜。70以上で満タン＝通知、100以上で激アツ）、レベル（高・中・低）、試合時間、説明文
 ※ 説明文に得点そのものは入れない（スコアは表示しない方針）
 """
 
 SKIP = {84, 85, 86, 87}          # タイマー・選手交代
 HIGH, MID = 70, 45
+BREAK = 100                      # 激アツ：見どころ度がここまで上がると、熱さが100%を超えてゲージを突き破る（約143%）
 RECENT = 60                      # 直近とみなす試合時間（秒）
 TEAM_LABEL = "レバンガ"
 
@@ -135,7 +136,7 @@ def evaluate(pbp: list[dict], team_is_home: bool = True) -> dict | None:
             break
     if run >= 8 and scoring and t_now - _elapsed(scoring[-1][0]) <= RECENT:
         score += 5
-    score = int(min(score, 100))
+    score = int(score)                     # 上限なし。100以上は「激アツ」（通知は HIGH・MID で判定するので変わらない）
     level = "高" if score >= HIGH else "中" if score >= MID else "低"
 
     time_phrase = _time_phrase(q, rest, late, ot)
