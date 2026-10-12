@@ -309,7 +309,7 @@ FACTS = ('<div class="sample" aria-label="通知の例"><span class="app">見ど
          '<b>いま見て！ 佐賀戦</b><span>第4Q残り2分、1ポゼッション差。レバンガが逆転！</span></div>'
          '<dl class="facts"><dt>届くとき</dt><dd>試合が接戦・逆転・終盤の山場になった瞬間</dd>'
          '<dt>回数</dt><dd>{count}</dd>'
-         '<dt>中身</dt><dd>点数（スコア）は送りません。「逆転」「同点」など試合の流れは書きます</dd></dl>')
+         '</dl>')
 
 
 def notify_block() -> str:
