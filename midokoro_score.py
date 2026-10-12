@@ -10,7 +10,7 @@ v1.2の変更（公式YouTubeハイライト20試合・1,821得点プレーの�
 根拠：レバンガ北海道 2025-26 の7試合・ハイライト101場面の分析
   ハイライトに選ばれやすい：4Q残り3分以内（約3.3倍）、逆転・先制（約1.9倍）、ダンク（約5.6倍）、3P（約1.5倍）
   ほぼ選ばれない：フリースロー
-過去60試合の再生テスト：最終5点差以内の23試合すべてで通知、20点差以上は13試合中1試合
+過去60試合の再生テスト（v1.2、2026-10-11）：通知は1試合平均1.23回、最終5点差以内の23試合すべてで通知、20点差以上の13試合は0件
 
 入力：公式サイトが使うプレー記録（PlayByPlays）と、レバンガがホームかどうか
 出力：見どころ度（0〜100）、レベル（高・中・低）、試合時間、説明文
@@ -181,6 +181,26 @@ def good_plays(pbp: list[dict], team_is_home: bool = True) -> list[dict]:
             kinds.append("3P")
         if kinds:
             out.append({"clock": _clock(q, rest), "text": "・".join(kinds) + (f"　{name}" if name else "")})
+    return out
+
+
+def heat_curve(pbp: list[dict], team_is_home: bool = True, step: int = 30) -> list[list[int]]:
+    """熱さの推移：試合時間 step 秒ごとの見どころ度 [[経過秒, 見どころ度], ...]。
+       その時点までのプレーだけで evaluate() し直すので、試合中のゲージの動きをそのまま再現する"""
+    plays = [p for p in pbp if p.get("ActionCD1") not in SKIP and p.get("RestTime")]
+    if not plays:
+        return []
+    plays.sort(key=lambda p: (_elapsed(p), p.get("No") or 0))
+    times = [_elapsed(p) for p in plays]
+    out, i, t = [], 0, step
+    end = times[-1]
+    while t < end + step:
+        while i < len(plays) and times[i] <= t:
+            i += 1
+        ev = evaluate(plays[:i], team_is_home) if i else None
+        if ev and ev["level"] != "終了":
+            out.append([int(min(t, end)), int(ev["score"])])
+        t += step
     return out
 
 

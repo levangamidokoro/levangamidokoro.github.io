@@ -1,5 +1,9 @@
 # 見どころなう レバンガ北海道版（非公式）
 
+**公開ページ：https://levangamidokoro.github.io/**
+
+レバンガ北海道の試合の熱さをゲージで表示し、ゲージが満タンになったら「いま見て！」と通知します。
+
 レバンガ北海道の試合で盛り上がった瞬間を判定して、「いま見て！」と知らせる個人の非公式サービスです。
 B.LEAGUE・レバンガ北海道とは関係ありません。スコアそのものは表示・配信せず、B.LEAGUE公式の試合ページへのリンクだけを出します。
 
@@ -18,3 +22,10 @@ B.LEAGUE・レバンガ北海道とは関係ありません。スコアそのも
   - Secrets：`LINE_CHANNEL_ACCESS_TOKEN`
   - Secrets：`CLOUDFLARE_API_TOKEN`、`CLOUDFLARE_ACCOUNT_ID`、`STATS_TOKEN`（利用状況ページの合言葉）
   - Variables：`LINE_ADD_URL`（友だち追加リンク）、`SITE_URL`（このページのURL）、`MIDOKORO_API`（受付窓口のURL。deploy-api の実行結果に表示される）
+  - Variables（任意）：`GOOGLE_SITE_VERIFICATION`（Google Search Console の「HTMLタグ」で表示される content の値）、`BING_SITE_VERIFICATION`
+
+## 熱さゲージ
+
+- 熱さ（%）＝ 見どころ度 ÷ 通知ライン（`midokoro_score.HIGH`＝70）。100%（満タン）が「いま見て！」の通知。
+- 熱さの推移は `midokoro_score.heat_curve()` で、試合時間30秒ごとに、その時点までのプレーだけで判定し直して作る。
+- 終わった試合（見どころなうが動いていなかった試合も）は、試合データから一度だけ計算して `data/alerts.json` に残す。

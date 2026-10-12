@@ -1,5 +1,5 @@
 """
-見どころなう レバンガ北海道版 収集・判定プログラム（v0.5：判定ルール v1.2、好プレーの記録）
+見どころなう レバンガ北海道版 収集・判定プログラム（v0.6：判定ルール v1.2、好プレー・熱さの推移の記録）
 
 やること（止めるまで動き続ける）
   1) 6時間ごと：B.LEAGUE公式の日程ページ（クラブ：レバンガ北海道）から、前後の試合を取る
@@ -301,6 +301,7 @@ def view(g: dict, alerts: dict, ev: dict | None, status: str) -> dict:
         "text": ev["text"] if ev else None, "clock": ev["clock"] if ev else None,
         "alerts": alerts.get(g["key"], {}).get("items", []),
         "plays": alerts.get(g["key"], {}).get("plays", []),
+        "heat": alerts.get(g["key"], {}).get("heat", []),      # 熱さの推移 [[経過秒, 見どころ度], ...]
         "tracked": bool(alerts.get(g["key"], {}).get("tracked")),
     }
 
@@ -311,6 +312,7 @@ class Tracker:
         self.last_notify: dict[str, datetime] = {}
         self.ended: set[str] = set()
         self.notified = False
+        self._heat_tried: set[str] = set()
 
     def status_of(self, g: dict, t: datetime, ev: dict | None) -> str:
         if g["final"] or g["key"] in self.ended:
@@ -356,6 +358,36 @@ class Tracker:
             notify_line(f"【見どころなう】いま見て！ {g['opponent']}戦\n{ev['text']}\n{url}")
         save_alerts(self.alerts)
 
+    def ensure_heat(self, g: dict) -> None:
+        """終わった試合の熱さの推移がまだなければ、試合データから計算して残す（見どころなうが動いていなかった試合も）"""
+        key = g["key"]
+        rec = self.alerts.get(key) or {}
+        if rec.get("heat") or rec.get("heat_none") or rec.get("heat_tries", 0) >= 3 or key in self._heat_tried:
+            return
+        self._heat_tried.add(key)
+        try:
+            ctx = fetch_context(key)
+        except Exception as e:
+            log(f"熱さの推移：試合データ取得失敗 {key}: {e}")
+            ctx = None
+        rec = self.alerts.setdefault(key, {"items": [], "line": False, "flags": []})
+        pbp = (ctx or {}).get("PlayByPlays") or []
+        try:
+            heat = midokoro_score.heat_curve(pbp, g["is_home"]) if pbp else []
+        except Exception as e:
+            log(f"熱さの推移の計算失敗 {key}: {e}")
+            heat = []
+        if heat:
+            rec["heat"] = heat
+            if not rec.get("plays"):
+                rec["plays"] = midokoro_score.good_plays(pbp, g["is_home"])
+            log(f"熱さの推移を計算 {g['opponent']}戦（{len(heat)}点）")
+        elif ctx is not None:
+            rec["heat_none"] = True               # データはあるがプレー記録がない
+        else:
+            rec["heat_tries"] = rec.get("heat_tries", 0) + 1
+        save_alerts(self.alerts)
+
     def update(self, games: dict[str, dict], t: datetime) -> list[str]:
         today = game_day(t)
         live = [g for g in games.values() if in_window(g, t) and g["key"] not in self.ended and not g["final"]]
@@ -368,8 +400,17 @@ class Tracker:
                 if pbp:
                     plays = midokoro_score.good_plays(pbp, g["is_home"])
                     rec = self.alerts.setdefault(g["key"], {"items": [], "line": False, "flags": []})
+                    changed = False
                     if plays != rec.get("plays"):
                         rec["plays"] = plays            # 好プレー（通知はしない。ページとLINE返信に並べる）
+                        changed = True
+                    try:
+                        heat = midokoro_score.heat_curve(pbp, g["is_home"])   # 熱さの推移（ページのグラフ用）
+                        if heat != rec.get("heat"):
+                            rec["heat"], changed = heat, True
+                    except Exception as e:
+                        log(f"熱さの推移の計算失敗 {g['key']}: {e}")
+                    if changed:
                         save_alerts(self.alerts)
             except Exception as e:
                 log(f"試合データ取得失敗 {g['key']}: {e}")
@@ -391,6 +432,9 @@ class Tracker:
         future = [g for g in ordered if date.fromisoformat(g["date"]) > today]
         past = [g for g in ordered if date.fromisoformat(g["date"]) < today]
         cur = todays[0] if todays else None
+        done = ([past[-1]] if past else []) + ([cur] if cur and self.status_of(cur, t, evs.get(cur["key"])) == "終了" else [])
+        for g in done:
+            self.ensure_heat(g)
         state = {
             "updated": f"{t:%Y-%m-%d %H:%M}",
             "today": view(cur, self.alerts, evs.get(cur["key"]), self.status_of(cur, t, evs.get(cur["key"]))) if cur else None,
