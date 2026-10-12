@@ -53,6 +53,8 @@ NEXT_COUNT = 5
 REQUEST_WAIT = 1.5
 
 PUSH_ENABLED = os.environ.get("MIDOKORO_PUSH", "1") != "0"     # GitHub版は 0（受付サーバーがない）
+LIVE_API = bool(os.environ.get("MIDOKORO_API"))                  # GitHub版：「いまの熱さ」を受付窓口に置く
+LIVE_HEARTBEAT = timedelta(seconds=60)                           # 変化がなくても、この間隔で置き直す（更新中だとわかるように）
 PUBLISH_CMD = os.environ.get("MIDOKORO_PUBLISH_CMD", "")         # GitHub版：ページを公開するコマンド
 PUBLISH_LIVE = timedelta(minutes=6)       # 試合中の公開間隔（GitHub Pagesの更新は1時間に10回まで）
 PUBLISH_IDLE = timedelta(minutes=60)      # 試合がないときの公開間隔
@@ -313,6 +315,8 @@ class Tracker:
         self.ended: set[str] = set()
         self.notified = False
         self._heat_tried: set[str] = set()
+        self._live_sent: tuple | None = None
+        self._live_at: datetime | None = None
 
     def status_of(self, g: dict, t: datetime, ev: dict | None) -> str:
         if g["final"] or g["key"] in self.ended:
@@ -357,6 +361,27 @@ class Tracker:
             rec["line"] = True                     # 無料枠節約のため1試合1回まで
             notify_line(f"【見どころなう】いま見て！ {g['opponent']}戦\n{ev['text']}\n{url}")
         save_alerts(self.alerts)
+
+    def post_live(self, v: dict, t: datetime) -> None:
+        """今日の試合の「いまの熱さ」を受付窓口に置く（ページが20秒ごとに読む）。変化したときと、1分おきに"""
+        if not LIVE_API or v["status"] not in ("試合中", "終了"):
+            return
+        if v["status"] == "試合中" and v["meter"] is None:
+            return
+        sig = (v["key"], v["status"], v["level"], v["meter"], v["clock"], v["text"])
+        if sig == self._live_sent and self._live_at and t - self._live_at < LIVE_HEARTBEAT:
+            return
+        if v["status"] == "終了" and self._live_sent and self._live_sent[1] == "終了" and self._live_sent[0] == v["key"]:
+            return                                 # 終了は1回だけ
+        try:
+            import push_api
+            from site_build import heat_pct
+            push_api.post_live({"key": v["key"], "status": v["status"], "level": v["level"] or "", "meter": v["meter"],
+                                "pct": heat_pct(v["meter"]), "clock": v["clock"] or "", "text": v["text"] or "",
+                                "opponent": v["opponent"], "url": v["url"], "at": int(t.timestamp())})
+            self._live_sent, self._live_at = sig, t
+        except Exception as e:
+            log(f"いまの熱さを置けませんでした: {e}")
 
     def ensure_heat(self, g: dict) -> None:
         """終わった試合の熱さの推移がまだなければ、試合データから計算して残す（見どころなうが動いていなかった試合も）"""
@@ -441,6 +466,8 @@ class Tracker:
             "next": [view(g, self.alerts, None, "予定") for g in future[:NEXT_COUNT]],
             "last": view(past[-1], self.alerts, None, "終了") if past else None,
         }
+        if state["today"]:
+            self.post_live(state["today"], t)
         DATA.mkdir(exist_ok=True)
         tmp = STATE_FILE.with_suffix(".tmp")
         tmp.write_text(json.dumps(state, ensure_ascii=False, indent=1), encoding="utf-8")

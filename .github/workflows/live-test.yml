@@ -1,0 +1,35 @@
+# 「いまの熱さ」の受付窓口のテスト（手動実行用）
+# GitHubの本人証明（OIDC）で /api/live に試験用の値を置き、読み戻せるか確かめる。
+# 試験用の値は試合のキーが "test" なので、ページには出ない。通知も送らない。
+name: live-test
+on:
+  workflow_dispatch:
+permissions:
+  contents: read
+  id-token: write
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - run: pip install -q requests
+      - name: 置いて、読み戻す
+        env:
+          MIDOKORO_API: ${{ vars.MIDOKORO_API }}
+        run: |
+          python - <<'PY'
+          import os, time, requests, push_api
+          at = int(time.time())
+          push_api.post_live({"key": "test", "status": "試合中", "level": "中", "meter": 50, "pct": 71,
+                              "clock": "4Q 3:00", "text": "試験用", "opponent": "試験", "url": "https://www.bleague.jp/", "at": at})
+          got = requests.get(os.environ["MIDOKORO_API"].rstrip("/") + "/api/live", timeout=10).json()
+          print("読み戻した値:", got)
+          assert got["live"]["key"] == "test" and got["live"]["at"] == at, "読み戻せませんでした"
+          bad = requests.post(os.environ["MIDOKORO_API"].rstrip("/") + "/api/live", json={"key": "x"}, timeout=10)
+          print("本人証明なしの書き込み:", bad.status_code)
+          assert bad.status_code == 401
+          print("OK")
+          PY

@@ -24,7 +24,7 @@ import math
 import os
 import re
 import shutil
-from datetime import datetime
+from datetime import datetime, timedelta, timezone
 from pathlib import Path
 from urllib.parse import quote
 
@@ -35,6 +35,7 @@ OUT_DIR = Path("public")
 STATIC_DIR = Path("static")
 TEAM = "レバンガ北海道"
 SEGMENTS = 20
+JST = timezone(timedelta(hours=9))
 
 SITE_URL = (os.environ.get("SITE_URL") or "https://levangamidokoro.github.io/").rstrip("/") + "/"
 PUSH_ENABLED = os.environ.get("MIDOKORO_PUSH", "1") != "0"   # 受付窓口がないときは 0
@@ -124,6 +125,7 @@ body[data-pstate=on] .on-badge{display:inline-block}
 .panel.hot .gauge i.on{animation:glow 1.4s ease-in-out infinite}
 @keyframes glow{50%{background:#E4F7A8;box-shadow:0 0 16px rgba(228,247,168,.85)}}
 .panel .say{margin:12px 0 0;font-size:16px;font-weight:700}
+.panel .upd{margin-left:auto;font-size:12px;color:var(--mist);white-space:nowrap}
 .panel .quiet-note{margin:10px 0 0;font-size:14px;color:var(--mist)}
 .panel .btn{margin-top:14px}
 .nextgame{display:grid;grid-template-columns:1fr auto;align-items:center;gap:2px 10px}
@@ -330,6 +332,25 @@ dialog.guide .row{display:grid;gap:8px;margin-top:12px}
 """
 
 SCRIPT = r"""
+// 共通：試合時間の表記（経過秒 → 「4Q 残り2:00」、判定の表記「4Q 2:58」→「4Q 残り2:58」）
+const mdClock = (() => {
+  const f = (r) => `${Math.floor(r / 60)}:${String(Math.floor(r % 60)).padStart(2, "0")}`;
+  const label = (t) => {
+    if (t < 2400) { const q = Math.floor(t / 600) + 1; return `${q}Q 残り${f(q * 600 - t)}`; }
+    if (t === 2400) return "4Q 残り0:00";
+    const k = Math.ceil((t - 2400) / 300);
+    return `${k === 1 ? "OT" : "OT" + k} 残り${f(2400 + 300 * k - t)}`;
+  };
+  const nice = (c) => {
+    let m = /^(\d)Q (\d+):(\d{2})$/.exec(c || "");
+    if (m) return label((+m[1] - 1) * 600 + 600 - (+m[2] * 60 + +m[3]));
+    m = /^OT(\d*) (\d+):(\d{2})$/.exec(c || "");
+    if (m) return label(2400 + (+(m[1] || 1) - 1) * 300 + 300 - (+m[2] * 60 + +m[3]));
+    return c || "";
+  };
+  return { label, nice };
+})();
+
 // 1) 試合の部分（data-live）だけ30秒ごとに新しくする（ページ全体は読み直さない）
 (() => {
   const last = new Map();
@@ -354,6 +375,7 @@ SCRIPT = r"""
   }
   setInterval(refresh, 30000);
   document.addEventListener("visibilitychange", () => { if (!document.hidden) refresh(); });
+  addEventListener("midokoro:refresh", refresh);
 })();
 
 // 2) 試合開始までのカウントダウン
@@ -535,13 +557,7 @@ SCRIPT = r"""
 
 // 6) 熱さの推移：指やマウスを置いた時間の熱さを出す（←→キーでも動かせる）
 (() => {
-  const f = (r) => `${Math.floor(r / 60)}:${String(Math.floor(r % 60)).padStart(2, "0")}`;
-  const label = (t) => {
-    if (t < 2400) { const q = Math.floor(t / 600) + 1; return `${q}Q 残り${f(q * 600 - t)}`; }
-    if (t === 2400) return "4Q 残り0:00";
-    const k = Math.ceil((t - 2400) / 300);
-    return `${k === 1 ? "OT" : "OT" + k} 残り${f(2400 + 300 * k - t)}`;
-  };
+  const label = mdClock.label;
   const init = (plot) => {
     if (plot.dataset.ready) return;
     plot.dataset.ready = "1";
@@ -579,6 +595,55 @@ SCRIPT = r"""
   const all = () => document.querySelectorAll(".plot[data-curve]").forEach(init);
   all();
   addEventListener("midokoro:live", all);
+})();
+
+// 8) 試合中のゲージ：受付窓口から20秒ごとに「いまの熱さ」を読み、ページの公開（数分おき）を待たずに動かす
+(() => {
+  const API = document.body.dataset.api || "";
+  if (!API) return;
+  const box = () => document.getElementById("live-top");
+  const esc = (v) => String(v == null ? "" : v).replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
+  let last = null;
+  const segs = (pct) => {
+    const lit = Math.floor(pct * 20 / 100); let h = "";
+    for (let i = 0; i < 20; i++) h += i < lit ? `<i class="on${i === lit - 1 && lit < 20 ? " lead" : ""}" style="--i:${i}"></i>` : `<i style="--i:${i}"></i>`;
+    return h;
+  };
+  const render = (d) => {
+    const hot = d.level === "高", pct = Math.max(0, Math.min(100, d.pct | 0));
+    const word = hot ? "いま見て！" : d.level === "中" ? "そろそろ" : "まだ大丈夫";
+    const goal = hot ? "満タン！" : `満タンまで あと${100 - pct}%`;
+    const say = d.text || (hot ? "" : "ゲージが満タンになったら、すぐにお知らせします。");
+    const tm = new Date(d.at * 1000).toLocaleTimeString("ja-JP", { timeZone: "Asia/Tokyo", hour: "2-digit", minute: "2-digit", second: "2-digit" });
+    return `<div class="panel still${hot ? " hot" : ""}" data-at="${d.at}" data-livekey="${esc(d.key)}">` +
+      `<p class="ctx"><span class="chip live">試合中</span>${d.clock ? `<span>${esc(mdClock.nice(d.clock))}</span>` : ""}` +
+      `<span>vs ${esc(d.opponent)}</span><span class="upd">${tm}時点</span></p>` +
+      `<p class="word">${word}</p>` +
+      `<p class="readout"><span class="lbl">熱さ</span><span class="fig">${pct}<small>%</small></span><span class="goal">${goal}</span></p>` +
+      `<div class="gauge" role="meter" aria-valuemin="0" aria-valuemax="100" aria-valuenow="${pct}" aria-label="熱さ ${pct}%（100%で通知）">${segs(pct)}</div>` +
+      (say ? `<p class="say">${esc(say)}</p>` : "") +
+      (d.url ? `<a class="btn${hot ? "" : " quiet"}" href="${esc(d.url)}" target="_blank" rel="noopener">試合を見る（B.LEAGUE公式）</a>` : "") + "</div>";
+  };
+  const apply = () => {
+    const b = box(), p = b && b.querySelector(".panel[data-livekey]");
+    if (!p || !last || p.dataset.livekey !== String(last.key) || +p.dataset.at >= last.at) return;
+    if (last.status === "終了") { dispatchEvent(new Event("midokoro:refresh")); return; }
+    if (last.status !== "試合中") return;
+    b.innerHTML = render(last);
+    document.title = last.level === "高" ? `いま見て！ レバンガ vs ${last.opponent}（熱さ100%）｜見どころなう（非公式）`
+                                         : `熱さ${last.pct}% レバンガ vs ${last.opponent}｜見どころなう（非公式）`;
+  };
+  async function poll() {
+    if (document.hidden || !document.querySelector("#live-top .panel[data-livekey]")) return;
+    try {
+      const j = await (await fetch(API + "/api/live", { cache: "no-store" })).json();
+      if (j && j.live) { last = j.live; apply(); }
+    } catch (e) {}
+  }
+  poll();
+  setInterval(poll, 20000);
+  document.addEventListener("visibilitychange", () => { if (!document.hidden) poll(); });
+  addEventListener("midokoro:live", apply);       // ページの部分更新のあとも、新しいほうを出す
 })();
 
 // 7) 実演「満タンになると、こう届く」：画面に入ったら1回だけ動かす（もう一度見るボタンあり）
@@ -740,18 +805,24 @@ def _nextgame(g: dict, chip: str, updated: str | None) -> str:
             f'<p class="vs">vs {e(g["opponent"])}<small>{e(g["place"])}</small></p></div>')
 
 
-def _panel(inner: str, hot: bool = False) -> str:
-    return f'<div class="panel{" hot" if hot else ""}">{inner}</div>'
+def _panel(inner: str, hot: bool = False, attrs: str = "") -> str:
+    return f'<div class="panel{" hot" if hot else ""}"{attrs}>{inner}</div>'
 
 
 def panel(state: dict) -> tuple[str, str]:
     """ファーストビューの熱さゲージ（HTML, ページタイトル）"""
     g, up = state.get("today"), state.get("updated")
+    try:
+        at = int(datetime.strptime(up or "", "%Y-%m-%d %H:%M").replace(tzinfo=JST).timestamp())
+    except ValueError:
+        at = 0
+    live_attrs = f' data-at="{at}" data-livekey="{e(g["key"])}"' if g and API_BASE else ""
     if g and g["status"] == "試合中":
         lv, clock, pct = g.get("level"), g.get("clock"), heat_pct(g.get("meter"))
         hot = lv == "高"
         ctx = (f'<p class="ctx"><span class="chip live">試合中</span>'
-               f'{f"<span>{e(nice_clock(clock))}</span>" if clock else ""}<span>vs {e(g["opponent"])}</span></p>')
+               f'{f"<span>{e(nice_clock(clock))}</span>" if clock else ""}<span>vs {e(g["opponent"])}</span>'
+               f'<span class="upd">{e((up or "")[11:16])}時点</span></p>')
         word = "いま見て！" if hot else ("そろそろ" if lv == "中" else "まだ大丈夫")
         goal = "満タン！" if hot else f"満タンまで あと{100 - pct}%"
         say = g.get("text") or ("" if hot else "ゲージが満タンになったら、すぐにお知らせします。")
@@ -760,12 +831,14 @@ def panel(state: dict) -> tuple[str, str]:
                  f'{_btn("試合を見る（B.LEAGUE公式）", g["url"], quiet=not hot)}')
         title = (f'いま見て！ レバンガ vs {g["opponent"]}（熱さ100%）｜見どころなう（非公式）' if hot
                  else f'熱さ{pct}% レバンガ vs {g["opponent"]}｜見どころなう（非公式）')
-        return _panel(inner, hot), title
+        return _panel(inner, hot, live_attrs), title
     if g and g["status"] in ("予定", "まもなく"):
         chip = "まもなく試合開始" if g["status"] == "まもなく" else "今日の試合"
         inner = (f'{_nextgame(g, chip, up)}{readout(0, goal="満タンで通知")}{gauge(0)}'
                  '<p class="quiet-note">試合が始まると、ゲージが動きだします。</p>')
-        return _panel(inner), TITLE
+        st = _start(g)
+        soon = g["status"] == "まもなく" or (st is not None and at and st.replace(tzinfo=JST).timestamp() - at <= 3600)
+        return _panel(inner, attrs=live_attrs if soon else ""), TITLE   # 開始1時間前から、いまの熱さを読みにいく
     if g and g["status"] == "終了":
         heat = g.get("heat") or []
         peak = heat_pct(max((s for _, s in heat), default=0))
@@ -997,7 +1070,8 @@ FAQ_ITEMS = [
      "熱さゲージが満タンになったときです。満タンになるのは第4Qと延長戦の接戦で、逆転・同点になったときや、"
      "競ったまま残り3分に入ったときなどです。1試合おおむね1〜3回で、大差の試合や試合のない日は届きません。"),
     ("ゲージはどれくらいの間隔で動きますか？",
-     "試合中、このページのゲージは数分おきに新しくなります。通知は、満タンになった直後に届きます。"),
+     ("試合中は、20秒ほどの間隔で動きます。通知は、満タンになった直後に届きます。" if API_BASE else
+      "試合中、このページのゲージは数分おきに新しくなります。通知は、満タンになった直後に届きます。")),
     ("iPhoneでも使えますか？",
      "使えます（iOS 16.4以降）。Safariでこのページを開き、共有ボタンから「ホーム画面に追加」を選んだあと、"
      "ホーム画面のアイコンから開いて「無料で通知を受け取る」を押してください。"),

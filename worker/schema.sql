@@ -18,3 +18,8 @@ CREATE TABLE IF NOT EXISTS visitors ( -- 日ごとのおおよその訪問者数
   h   TEXT NOT NULL,
   PRIMARY KEY (day, h)
 );
+CREATE TABLE IF NOT EXISTS live (    -- 試合中の「いまの熱さ」（1行だけ。収集プログラムが20秒ごとに上書きする）
+  id   INTEGER PRIMARY KEY,
+  body TEXT NOT NULL,
+  at   INTEGER NOT NULL
+);

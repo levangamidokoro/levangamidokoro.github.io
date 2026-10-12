@@ -4,10 +4,12 @@
 //   GET  /api/vapid        通知用の公開鍵
 //   POST /api/subscribe    通知の登録   POST /api/unsubscribe  通知の解除
 //   POST /api/hit          ページの表示を1回数える（Cookieは使わない）
+//   GET  /api/live         試合中の「いまの熱さ」（ページが20秒ごとに読む）
 // 閲覧用トークンが必要
 //   GET  /api/stats        アクセス数・通知登録数の集計
 // GitHub Actions だけが呼べる（GitHubが発行する本人証明トークン＝OIDCで確認。合言葉の共有は不要）
 //   POST /api/notify       登録者全員にWebプッシュを送る（40件ずつ。cursor を返すので続きを呼ぶ）
+//   POST /api/live         「いまの熱さ」を置く（収集プログラムが20秒ごとに呼ぶ）
 //
 // 環境変数：ALLOW_ORIGIN, ALLOW_REPO（vars）
 // シークレット：VAPID_PUBLIC, VAPID_PRIVATE_JWK, STATS_TOKEN, HASH_SALT（初回デプロイ時に自動で作る。STATS_TOKENだけは本人が決める）
@@ -166,6 +168,30 @@ async function githubOk(env, req) {
 
 const BATCH = 40;   // 無料プランは1回の呼び出しで外部への送信が50件まで
 
+// ---------- 試合中の「いまの熱さ」 ----------
+const LIVE_MAX_AGE = 4 * 3600;            // 4時間より古いものは返さない
+let liveMemo = { t: 0, v: null };         // 同じ場所への問い合わせが続いたら、5秒だけ使い回す
+const str = (v, n) => (typeof v === "string" ? v.slice(0, n) : "");
+const int = (v, lo, hi) => (Number.isFinite(+v) ? Math.max(lo, Math.min(hi, Math.round(+v))) : null);
+
+function cleanLive(r) {                    // 決まった項目だけを、長さと形をそろえて残す
+  const key = /^[0-9a-z_-]{1,20}$/i.test(String(r.key || "")) ? String(r.key) : null;
+  const url = /^https:\/\/www\.bleague\.jp\//.test(String(r.url || "")) ? str(r.url, 200) : "";
+  const level = ["高", "中", "低"].includes(r.level) ? r.level : "";
+  if (!key) return null;
+  return { key, status: str(r.status, 10), level, meter: int(r.meter, 0, 100), pct: int(r.pct, 0, 100),
+           clock: str(r.clock, 20), text: str(r.text, 200), opponent: str(r.opponent, 20), url,
+           at: int(r.at, 0, 4102444800) || Math.floor(Date.now() / 1000) };
+}
+
+async function readLive(env) {
+  if (Date.now() - liveMemo.t < 5000) return liveMemo.v;
+  const row = await env.DB.prepare("SELECT body, at FROM live WHERE id = 1").first();
+  const v = row && Date.now() / 1000 - row.at < LIVE_MAX_AGE ? JSON.parse(row.body) : null;
+  liveMemo = { t: Date.now(), v };
+  return v;
+}
+
 export default {
   async fetch(req, env) {
     const h = cors(env, req);
@@ -210,6 +236,18 @@ export default {
         const v = await sha(`${day}|${ip}|${ua}|${env.HASH_SALT || ""}`);
         await env.DB.prepare("INSERT OR IGNORE INTO visitors (day, h) VALUES (?1, ?2)").bind(day, v).run();
         return new Response(null, { status: 204, headers: h });
+      }
+      if (url.pathname === "/api/live" && req.method === "GET") {
+        return json({ ok: true, live: await readLive(env) }, 200, h);
+      }
+      if (url.pathname === "/api/live" && req.method === "POST") {
+        if (!(await githubOk(env, req))) return json({ ok: false }, 401, h);
+        const v = cleanLive(await body(req));
+        if (!v) return json({ ok: false }, 400, h);
+        await env.DB.prepare("INSERT INTO live (id, body, at) VALUES (1, ?1, ?2) ON CONFLICT(id) DO UPDATE SET body = ?1, at = ?2")
+          .bind(JSON.stringify(v), v.at).run();
+        liveMemo = { t: Date.now(), v };
+        return json({ ok: true }, 200, h);
       }
       if (url.pathname === "/api/stats" && req.method === "GET") {
         if (!authed(req, env.STATS_TOKEN)) return json({ ok: false }, 401, h);
