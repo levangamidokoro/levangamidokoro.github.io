@@ -1,0 +1,173 @@
+<!doctype html>
+<html lang="ja"><head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>見どころなう｜レバンガ北海道版</title>
+<meta name="description" content="レバンガ北海道の試合が盛り上がった瞬間をお知らせする、非公式のファンサービスです。">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="apple-touch-icon" href="icon-180.png">
+<meta name="theme-color" content="#8FC31F">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=BIZ+UDPGothic:wght@400;700&family=Dela+Gothic+One&display=swap">
+<style>
+:root{
+  --lime:#8FC31F; --pine:#14290F; --snow:#F6F8F1; --frost:#DDE6D0; --moss:#56664F;
+  --bg:var(--snow); --ink:var(--pine); --sub:var(--moss); --line:var(--frost);
+  --btn-bg:var(--pine); --btn-ink:var(--snow); --empty:#CFDAC0;
+  --display:"Dela Gothic One","Hiragino Sans","Noto Sans JP",sans-serif;
+  --body:"BIZ UDPGothic","Hiragino Sans","Noto Sans JP",sans-serif;
+}
+@media (prefers-color-scheme: dark){
+  :root{ --bg:#0D1A0B; --ink:#E8F0DD; --sub:#9AAA90; --line:#24361F;
+         --btn-bg:#8FC31F; --btn-ink:#14290F; --empty:#2C4226; }
+}
+*{box-sizing:border-box}
+html{-webkit-text-size-adjust:100%}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--body);
+     font-size:16px;line-height:1.75}
+a{color:inherit}
+.wrap{max-width:560px;margin:0 auto;padding:0 20px}
+:focus-visible{outline:3px solid var(--lime);outline-offset:3px;border-radius:4px}
+
+header.site{display:flex;align-items:baseline;gap:12px;flex-wrap:wrap;padding-top:20px;padding-bottom:4px}
+.mark{font-family:var(--display);font-size:22px;letter-spacing:.02em;margin:0;font-weight:400}
+.edition{font-size:13px;color:var(--sub)}
+
+.hero{margin-top:14px;padding:28px 0 32px;border-top:6px solid var(--lime)}
+.hero .ctx{margin:0;font-size:14px;color:var(--sub)}
+.hero .word{margin:6px 0 4px;font-family:var(--display);font-weight:400;
+            font-size:clamp(46px,15vw,84px);line-height:1.08;letter-spacing:0}
+.hero .say{margin:0;font-size:17px;max-width:32em}
+.hero .word .wd{font-family:var(--body);font-weight:700;font-size:.34em;margin-left:.35em;white-space:nowrap}
+.hero.hot{background:var(--lime);color:var(--pine);border-top-color:var(--lime)}
+.hero.hot .ctx{color:var(--pine)}
+.hero.hot:not(.still){animation:flood .7s cubic-bezier(.2,.7,.2,1) both}
+@keyframes flood{from{clip-path:inset(0 100% 0 0)}to{clip-path:inset(0 0 0 0)}}
+@media (prefers-reduced-motion:reduce){.hero.hot{animation:none}}
+
+.btn{display:inline-flex;align-items:center;justify-content:center;min-height:48px;padding:0 20px;
+     border-radius:6px;border:0;background:var(--btn-bg);color:var(--btn-ink);font:inherit;
+     font-weight:700;text-decoration:none;cursor:pointer}
+.btn.quiet{background:transparent;color:var(--ink);box-shadow:inset 0 0 0 2px var(--sub)}
+.hero .btn{margin-top:20px}
+.hero.hot .btn{background:var(--pine);color:var(--lime)}
+
+.meter{display:flex;align-items:center;gap:12px;margin-top:22px;font-size:13px;color:var(--sub)}
+.hero.hot .meter{color:var(--pine)}
+.bars{display:grid;grid-template-columns:repeat(10,1fr);gap:4px;flex:1;max-width:260px}
+.bars i{height:12px;border-radius:2px;background:var(--empty)}
+.bars i.on{background:var(--lime)}
+.hero.hot .bars i{background:rgba(20,41,15,.18)}
+.hero.hot .bars i.on{background:var(--pine)}
+
+section{padding:28px 0 4px}
+section h2{margin:0 0 10px;font-family:var(--display);font-weight:400;font-size:19px}
+.note{margin:0;color:var(--sub);font-size:14px}
+ol.moments,ul.games{list-style:none;margin:0;padding:0}
+h3.sub{font-size:14px;margin:22px 0 4px;color:var(--sub);font-weight:700}
+ol.moments li{display:grid;grid-template-columns:92px 1fr auto;gap:12px;align-items:baseline;
+              padding:12px 0;border-top:1px solid var(--line)}
+.clock{font-family:var(--display);font-size:15px;white-space:nowrap}
+.when{font-size:13px;color:var(--sub)}
+ul.games li{display:grid;grid-template-columns:76px 1fr auto;gap:12px;align-items:baseline;
+            padding:12px 0;border-top:1px solid var(--line)}
+.day{font-family:var(--display);font-size:17px;line-height:1.3}
+.day small{display:block;font-family:var(--body);font-size:12px;color:var(--sub)}
+.opp{font-weight:700}
+.opp small{display:block;font-weight:400;font-size:13px;color:var(--sub)}
+.start{font-family:var(--display);font-size:16px}
+.links{margin-top:14px;display:flex;gap:10px;flex-wrap:wrap}
+.notify .row{display:flex;gap:10px;flex-wrap:wrap;margin-top:12px}
+.notify .btn[hidden]{display:none}
+footer{padding:40px 0 48px;font-size:12px;color:var(--sub)}
+footer p{margin:0 0 6px}
+</style>
+</head>
+<body>
+<header class="site wrap"><h1 class="mark">見どころなう</h1><span class="edition">レバンガ北海道版（非公式）</span></header>
+<main>
+<div id="live"><div class="hero"><div class="wrap"><p class="ctx">次の試合　vs 佐賀　アウェイ（佐賀県）</p><h2 class="word">10/16<span class="wd">金曜日</span></h2><p class="say">19:05開始。始まったら、見どころをお知らせします。</p></div></div><section><div class="wrap"><h2>前回の試合　10/10 千葉J戦</h2><div class="links"><a class="btn quiet" href="https://basketball.mb.softbank.jp/api/v1/video/highlight?game_id=506447&amp;utm_source=bleague&amp;utm_medium=bleague&amp;utm_campaign=bleague_bleague_032" target="_blank" rel="noopener">ハイライト動画を見る</a></div></div></section></div>
+<section class="notify"><div class="wrap"><h2>通知を受け取る</h2><p class="note">このページは数分おきに更新されます。</p><div class="row"></div></div></section>
+<section><div class="wrap"><h2>この先の試合</h2><ul class="games"><li><span class="day">10/18<small>日曜日</small></span><span class="opp">vs 横浜BC<small>アウェイ（神奈川県）</small></span><span class="start">15:05</span></li><li><span class="day">10/21<small>水曜日</small></span><span class="opp">vs 富山<small>ホーム</small></span><span class="start">19:05</span></li><li><span class="day">10/24<small>土曜日</small></span><span class="opp">vs 広島<small>アウェイ（広島県）</small></span><span class="start">14:05</span></li><li><span class="day">10/31<small>土曜日</small></span><span class="opp">vs 茨城<small>アウェイ（茨城県）</small></span><span class="start">15:05</span></li></ul></div></section>
+</main>
+<footer class="wrap">
+<p>レバンガ北海道を応援する個人の非公式サービスです。B.LEAGUE・レバンガ北海道とは関係ありません。</p>
+<p>試合の映像と記録はB.LEAGUE公式でご覧ください。見どころの判定は試験運用中です。</p>
+<p>最終更新 2026-10-12 11:32</p>
+</footer>
+<script>
+(() => {
+  // 30秒ごとに試合の部分だけ新しくする（ページ全体は読み直さない）
+  async function refresh() {
+    if (document.hidden) return;
+    try {
+      const r = await fetch(location.pathname, { cache: "no-store" });
+      const doc = new DOMParser().parseFromString(await r.text(), "text/html");
+      const fresh = doc.getElementById("live"), cur = document.getElementById("live");
+      if (!fresh || !cur || fresh.innerHTML === cur.innerHTML) return;
+      const wasHot = !!cur.querySelector(".hero.hot");
+      cur.replaceWith(fresh);
+      const hot = fresh.querySelector(".hero.hot");
+      if (hot && wasHot) hot.classList.add("still");
+      document.title = doc.title;
+    } catch (e) {}
+  }
+  setInterval(refresh, 30000);
+  document.addEventListener("visibilitychange", () => { if (!document.hidden) refresh(); });
+})();
+
+(async () => {
+  const msg = document.getElementById("np"), btn = document.getElementById("nb");
+  if (!msg || !btn) return;
+  const API = "";
+  const viaLine = msg.dataset.line === "1" ? "LINEで受け取れます。" : "";
+  const ios = /iPhone|iPad|iPod/.test(navigator.userAgent);
+  const standalone = matchMedia("(display-mode: standalone)").matches || navigator.standalone;
+  if (!("serviceWorker" in navigator) || !("PushManager" in window)) {
+    msg.textContent = ios && !standalone
+      ? "iPhoneは、共有ボタンから「ホーム画面に追加」して開くと通知を受け取れます。"
+      : "このブラウザは通知に対応していません。" + viaLine;
+    return;
+  }
+  let reg;
+  try { reg = await navigator.serviceWorker.register("sw.js"); }
+  catch (e) { msg.textContent = "このページでは通知を設定できません。" + viaLine; return; }
+  const b64 = (s) => {
+    const raw = atob((s + "=".repeat((4 - s.length % 4) % 4)).replace(/-/g, "+").replace(/_/g, "/"));
+    return Uint8Array.from(raw, (c) => c.charCodeAt(0));
+  };
+  const post = (path, sub) => fetch(path, { method: "POST",
+    headers: { "Content-Type": "application/json" }, body: JSON.stringify(sub) });
+  const show = (on) => {
+    btn.hidden = false;
+    btn.textContent = on ? "この端末の通知を止める" : "この端末に通知する";
+    btn.classList.toggle("quiet", on);
+    msg.textContent = on ? "通知はオンです。見どころが来た瞬間にお知らせします。"
+                         : "見どころが来た瞬間に、この端末へお知らせします。";
+  };
+  let sub = await reg.pushManager.getSubscription();
+  show(!!sub);
+  btn.onclick = async () => {
+    btn.disabled = true;
+    try {
+      if (sub) {
+        await post(API + "/api/unsubscribe", sub); await sub.unsubscribe(); sub = null;
+      } else {
+        if (await Notification.requestPermission() !== "granted") {
+          msg.textContent = "通知が許可されていません。ブラウザの設定で、このサイトの通知を許可してください。";
+          return;
+        }
+        const { key } = await (await fetch(API + "/api/vapid")).json();
+        sub = await reg.pushManager.subscribe({ userVisibleOnly: true, applicationServerKey: b64(key) });
+        if (!(await post(API + "/api/subscribe", sub)).ok) throw new Error("subscribe");
+      }
+      show(!!sub);
+    } catch (e) {
+      msg.textContent = "通知を設定できませんでした。時間をおいて、もう一度押してください。";
+    } finally { btn.disabled = false; }
+  };
+})();
+</script>
+</body></html>

@@ -1,0 +1,4 @@
+data/games/
+data/daemon.log
+data/*.tmp
+*.tmp

@@ -1,0 +1,15 @@
+{
+  "name": "見どころなう レバンガ北海道版",
+  "short_name": "見どころなう",
+  "description": "レバンガ北海道の試合が盛り上がった瞬間をお知らせする非公式サービス",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#F6F8F1",
+  "theme_color": "#8FC31F",
+  "lang": "ja",
+  "icons": [
+    { "src": "icon-192.png", "sizes": "192x192", "type": "image/png" },
+    { "src": "icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any maskable" }
+  ]
+}
