@@ -1,0 +1,42 @@
+# GitHub App の確認（手動実行用）：App の鍵からこのリポジトリ用の鍵をもらえるか、状態コードだけを表示する。起動はしない
+name: app-test
+on:
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - name: 確かめる
+        env:
+          GH_APP_ID: ${{ secrets.GH_APP_ID }}
+          GH_APP_PRIVATE_KEY: ${{ secrets.GH_APP_PRIVATE_KEY }}
+          REPO: ${{ github.repository }}
+        run: |
+          echo "App ID の長さ: ${#GH_APP_ID} / 鍵の1行目: $(printf '%s\n' "$GH_APP_PRIVATE_KEY" | head -1 | cut -c1-31)"
+          printf '%s\n' "$GH_APP_PRIVATE_KEY" | openssl pkcs8 -topk8 -nocrypt > /tmp/k.pem && echo "鍵の変換: OK" || echo "鍵の変換: 失敗"
+          node - <<'JS'
+          const fs = require("fs"), crypto = require("crypto");
+          const b = (o) => Buffer.from(JSON.stringify(o)).toString("base64url");
+          const now = Math.floor(Date.now() / 1000);
+          const h = b({ alg: "RS256", typ: "JWT" }), c = b({ iat: now - 60, exp: now + 540, iss: String(process.env.GH_APP_ID).trim() });
+          const jwt = `${h}.${c}.${crypto.sign("RSA-SHA256", Buffer.from(`${h}.${c}`), fs.readFileSync("/tmp/k.pem")).toString("base64url")}`;
+          const H = { Accept: "application/vnd.github+json", "User-Agent": "midokoro-test", Authorization: `Bearer ${jwt}` };
+          (async () => {
+            const app = await fetch("https://api.github.com/app", { headers: H });
+            console.log("App の確認:", app.status, app.ok ? (await app.json()).slug : await app.text());
+            const inst = await fetch(`https://api.github.com/repos/${process.env.REPO}/installation`, { headers: H });
+            const ij = await inst.json();
+            console.log("リポジトリへの導入:", inst.status, inst.ok ? JSON.stringify(ij.permissions) : ij.message);
+            if (!inst.ok) return;
+            const t = await fetch(`https://api.github.com/app/installations/${ij.id}/access_tokens`, { method: "POST", headers: H,
+              body: JSON.stringify({ repositories: [process.env.REPO.split("/")[1]], permissions: { actions: "write" } }) });
+            const tj = await t.json();
+            console.log("鍵の発行:", t.status, t.ok ? "OK" : tj.message);
+            if (!t.ok) return;
+            const r = await fetch(`https://api.github.com/repos/${process.env.REPO}/actions/workflows/midokoro.yml/runs?per_page=1`,
+              { headers: { ...H, Authorization: `Bearer ${tj.token}` } });
+            console.log("Actions を読めるか:", r.status);
+          })();
+          JS
