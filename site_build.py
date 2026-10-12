@@ -54,13 +54,13 @@ CSS = """
 :root{
   --lime:#8FC31F; --pine:#14290F; --snow:#F6F8F1; --frost:#DDE6D0; --moss:#56664F; --mist:#C9D6BC; --board:#0B1909;
   --bg:var(--snow); --ink:var(--pine); --sub:var(--moss); --line:var(--frost); --card:#FFFFFF; --tile:var(--pine);
-  --series:#3F7A1A; --hot:#FFE14D; --hotline:#B87400;
+  --series:#3F7A1A; --hot:#FF453A; --hot-deep:#D42A1F; --hotline:#D42A1F;
   --display:"M PLUS 1","Hiragino Sans","Noto Sans JP",sans-serif;
   --num:"Anton","M PLUS 1",sans-serif;
   --body:"M PLUS 1","Hiragino Sans","Noto Sans JP",sans-serif;
 }
 @media (prefers-color-scheme: dark){
-  :root{ --bg:#0D1A0B; --ink:#E8F0DD; --sub:#9AAA90; --line:#24361F; --card:#122310; --tile:#1A3415; --series:#73A318; --hotline:#FFD43B; }
+  :root{ --bg:#0D1A0B; --ink:#E8F0DD; --sub:#9AAA90; --line:#24361F; --card:#122310; --tile:#1A3415; --series:#73A318; --hotline:#D1352B; }
 }
 *{box-sizing:border-box}
 [hidden]{display:none!important}
@@ -125,27 +125,26 @@ body[data-pstate=on] .on-badge{display:inline-block}
 .panel.hot .gauge i.on{animation:glow 1.4s ease-in-out infinite}
 @keyframes glow{50%{background:#E4F7A8;box-shadow:0 0 16px rgba(228,247,168,.85)}}
 .panel .say{margin:12px 0 0;font-size:16px;font-weight:700}
-/* 激アツ：100%を超えたら、ゲージの枠を裂いて破片が飛び出す */
-.chip.geki{background:var(--hot);color:var(--pine)}
-.panel.burst{box-shadow:0 0 0 2px var(--hot),0 0 48px rgba(255,225,77,.42),0 18px 40px rgba(0,0,0,.3)}
+/* 激アツ：100%を超えたら、ゲージが赤くなり、枠を裂いて破片が飛び出す */
+.chip.geki{background:var(--hot-deep);color:#FFFFFF}
+.panel.burst{box-shadow:0 0 0 2px var(--hot),0 0 48px rgba(255,69,58,.45),0 18px 40px rgba(0,0,0,.3)}
 .panel.burst .word,.panel.burst .readout .goal{color:var(--hot)}
 .panel.burst:not(.still){animation:jolt .5s cubic-bezier(.3,1.6,.5,1) .7s both}
 @keyframes jolt{0%{transform:none}35%{transform:scale(1.035) rotate(-.8deg)}65%{transform:scale(.99) rotate(.5deg)}100%{transform:none}}
 .gauge-wrap{display:flex;align-items:stretch;gap:5px}
-.gauge-wrap .gauge{flex:20 1 0;min-width:0;box-shadow:inset 0 0 0 1px rgba(255,225,77,.6);
+.gauge-wrap .gauge{flex:20 1 0;min-width:0;box-shadow:inset 0 0 0 1px rgba(255,69,58,.65);
   clip-path:polygon(0 0,calc(100% - 3px) 0,100% 16%,calc(100% - 7px) 33%,100% 50%,calc(100% - 4px) 68%,100% 84%,calc(100% - 6px) 100%,0 100%)}
-.gauge-wrap .gauge i.on{background:var(--hot);box-shadow:0 0 12px rgba(255,225,77,.85)}
+.gauge-wrap .gauge i.on{background:var(--hot);box-shadow:0 0 12px rgba(255,69,58,.8)}
 .panel.hot .gauge-wrap .gauge i.on{animation:glowhot 1.2s ease-in-out infinite}
-@keyframes glowhot{50%{background:#FFF6C2;box-shadow:0 0 18px rgba(255,246,194,.95)}}
+@keyframes glowhot{50%{background:#FF8A80;box-shadow:0 0 18px rgba(255,138,128,.95)}}
 .shards{flex:var(--n) 1 0;min-width:0;display:flex;gap:3px;padding:5px 0}
-.shards i{flex:1;border-radius:2px;background:var(--hot);box-shadow:0 0 14px rgba(255,225,77,.9);
+.shards i{flex:1;border-radius:2px;background:var(--hot);box-shadow:0 0 14px rgba(255,69,58,.85);
   transform:translate(calc(var(--k) * 2px),calc(var(--k) * -5px)) rotate(calc(var(--k) * -11deg));opacity:calc(1 - var(--k) * .1)}
 .shards i:nth-child(3n+1){clip-path:polygon(0 8%,100% 0,86% 100%,6% 88%)}
 .shards i:nth-child(3n+2){clip-path:polygon(12% 0,100% 14%,92% 92%,0 100%)}
 .shards i:nth-child(3n){clip-path:polygon(0 0,88% 10%,100% 100%,10% 84%)}
 .panel:not(.still) .shards i{animation:shard .5s cubic-bezier(.2,.9,.3,1.2) both;animation-delay:calc(.75s + var(--k) * 70ms)}
 @keyframes shard{from{transform:translate(-26px,0) scale(.3);opacity:0}}
-.poster:has(.panel.hot.burst){background-image:radial-gradient(520px 360px at 72% 34%,rgba(255,225,77,.6),transparent 72%)}
 .panel .upd{margin-left:auto;font-size:12px;color:var(--mist);white-space:nowrap}
 .panel .quiet-note{margin:10px 0 0;font-size:14px;color:var(--mist)}
 .panel .btn{margin-top:14px}
@@ -223,6 +222,7 @@ h3.sub{font-size:14px;margin:24px 0 4px;color:var(--sub);font-weight:700}
            font-family:var(--display);font-weight:900;font-size:16px;color:var(--pine)}
 .toast .ap{display:flex;justify-content:space-between;font-size:11px;color:var(--sub)}
 .toast b{font-size:15px;font-weight:900}
+.toast .ic.geki{background:var(--hot-deep);color:#FFFFFF}
 @keyframes drop{from{transform:translateY(-30px) scale(.96);opacity:0}to{transform:none;opacity:1}}
 .replay{justify-self:center;display:block;margin:10px auto 0}
 .burst-demo{display:grid;gap:12px;justify-items:center;margin-top:30px}
@@ -242,7 +242,7 @@ h3.sub{font-size:14px;margin:24px 0 4px;color:var(--sub);font-weight:700}
 @media (min-width:600px){.area{--h:180px}}
 .area .hotband{fill:var(--hotline);opacity:.08}
 .area .crack{fill:none;stroke:var(--hotline);stroke-width:2;stroke-linejoin:round;vector-effect:non-scaling-stroke}
-.blabel{position:absolute;transform:translate(-50%,-135%);padding:1px 9px;border-radius:999px;background:var(--hot);color:var(--pine);
+.blabel{position:absolute;transform:translate(-50%,-135%);padding:1px 9px;border-radius:999px;background:var(--hot-deep);color:#FFFFFF;
         font-size:12px;font-weight:900;white-space:nowrap;box-shadow:0 2px 8px rgba(0,0,0,.18)}
 .area svg{position:absolute;inset:0;width:100%;height:100%;overflow:visible}
 .area .gl{stroke:var(--line);stroke-width:1;vector-effect:non-scaling-stroke}
@@ -281,7 +281,7 @@ ol.flow li{position:relative;display:grid;grid-template-columns:40px 1fr;gap:14p
 ol.flow .dot{position:relative;z-index:1;width:40px;height:40px;border-radius:50%;display:grid;place-items:center;
              background:var(--bg);box-shadow:inset 0 0 0 3px var(--line);font-weight:900;font-size:17px;color:var(--sub)}
 ol.flow li.hot .dot{background:var(--lime);box-shadow:none;color:var(--pine)}
-ol.flow li.geki .dot{background:var(--hot);font-size:15px}
+ol.flow li.geki .dot{background:var(--hot-deep);color:#FFFFFF;font-size:15px}
 ol.flow .when{display:block;font-size:12px;font-weight:700;color:var(--sub)}
 ol.flow b{display:block;font-size:16px;line-height:1.5}
 ol.flow p{margin:2px 0 0;font-size:14px;color:var(--sub)}
@@ -297,6 +297,7 @@ ol.steps span{font-size:14px;color:var(--sub)}
 ol.moments,ul.games{list-style:none;margin:0;padding:0}
 ol.moments li{display:grid;grid-template-columns:96px 1fr auto;gap:12px;align-items:baseline;padding:12px 0;border-top:1px solid var(--line)}
 .clock{font-weight:900;font-size:15px;white-space:nowrap}
+ol.moments .chip{margin-right:8px;font-size:11px;padding:0 8px;vertical-align:2px}
 .when{font-size:13px;color:var(--sub)}
 ul.games li{display:grid;grid-template-columns:72px 1fr auto;gap:12px;align-items:center;padding:12px 0;border-top:1px solid var(--line)}
 .day{line-height:1.2}
@@ -306,6 +307,7 @@ ul.games li{display:grid;grid-template-columns:72px 1fr auto;gap:12px;align-item
 .opp small{display:block;font-weight:400;font-size:13px;color:var(--sub)}
 .start{font-family:var(--num);font-size:22px}
 .links{margin-top:14px;display:flex;gap:10px;flex-wrap:wrap}
+.panel .links .btn{margin-top:0}
 
 .share-row{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:14px}
 .share-row [data-share]{grid-column:1 / -1}
@@ -493,7 +495,7 @@ const mdClock = (() => {
       if (!r.ok) { try { await sub.unsubscribe(); } catch (e) {} sub = null; throw new Error("subscribe"); }
       set("on");
       try {
-        reg.showNotification("通知をオンにしました", { body: "レバンガの試合の熱さゲージが満タンになったら、こんなふうに「いま見て！」をお知らせします。",
+        reg.showNotification("通知をオンにしました", { body: "レバンガの試合の熱さゲージが満タンになったら「いま見て！」、100%を超えたら「激アツ！」を、こんなふうにお知らせします。",
           icon: "icon-192.png", badge: "icon-192.png", tag: "welcome", data: { url: "./" } });
       } catch (e) {}
     } catch (e) {
@@ -646,14 +648,14 @@ const mdClock = (() => {
     const pct = Math.max(0, Math.min(300, d.pct | 0)), peak = Math.max(pct, d.peak | 0);
     const hot = d.level === "高", burst = pct > 100;
     const word = burst ? "激アツ！" : hot ? "いま見て！" : d.level === "中" ? "そろそろ" : "まだ大丈夫";
-    const goal = burst ? "ゲージを突き破った！" : hot ? "満タン！" : `満タンまで あと${100 - pct}%`;
+    const goal = burst ? "" : hot ? "満タン！" : `満タンまで あと${100 - pct}%`;
     const say = d.text || (hot ? "" : "ゲージが満タンになったら、すぐにお知らせします。");
     const tm = new Date(d.at * 1000).toLocaleTimeString("ja-JP", { timeZone: "Asia/Tokyo", hour: "2-digit", minute: "2-digit", second: "2-digit" });
     return `<div class="panel${animate ? "" : " still"}${hot ? " hot" : ""}${burst ? " burst" : ""}" data-at="${d.at}" data-livekey="${esc(d.key)}">` +
       `<p class="ctx"><span class="chip live">試合中</span>${peak > 100 ? '<span class="chip geki">激アツ試合</span>' : ""}` +
       `${d.clock ? `<span>${esc(mdClock.nice(d.clock))}</span>` : ""}<span>vs ${esc(d.opponent)}</span><span class="upd">${tm}時点</span></p>` +
       `<p class="word">${word}</p>` +
-      `<p class="readout"><span class="lbl">熱さ</span><span class="fig">${pct}<small>%</small></span><span class="goal">${goal}</span></p>` +
+      `<p class="readout"><span class="lbl">熱さ</span><span class="fig">${pct}<small>%</small></span>${goal ? `<span class="goal">${goal}</span>` : ""}</p>` +
       gaugeHTML(pct) +
       (say ? `<p class="say">${esc(say)}</p>` : "") +
       (d.url ? `<a class="btn${hot ? "" : " quiet"}" href="${esc(d.url)}" target="_blank" rel="noopener">試合を見る（B.LEAGUE公式）</a>` : "") + "</div>";
@@ -831,10 +833,20 @@ def gauge(pct: int, extra: str = "") -> str:
 
 def readout(pct: int, label: str = "熱さ", goal: str = "満タンで通知", attr: str = "") -> str:
     return (f'<p class="readout"><span class="lbl">{e(label)}</span><span class="fig"{attr}>{pct}<small>%</small></span>'
-            f'<span class="goal">{e(goal)}</span></p>')
+            f'{f"<span class=goal>{e(goal)}</span>" if goal else ""}</p>')
 
 
 # ---------- 部品 ----------
+
+def highlight_url(g: dict) -> str | None:
+    """ハイライト動画：YouTube の検索結果につなぐ（B.LEAGUE公式のハイライトは「北海道」「相手」「ハイライト」「月.日.年」を題名に含むので、上に出る）。
+       YouTube は機械による検索結果や動画一覧の取得を robots.txt で断っているため、こちらでは動画を探しにいかず、検索のリンクだけを置く"""
+    m = re.fullmatch(r"(\d{4})-(\d{2})-(\d{2})", g.get("date") or "")
+    if not m or not g.get("opponent"):
+        return None
+    y, mo, d = m.groups()
+    return "https://www.youtube.com/results?search_query=" + quote(f"北海道 {g['opponent']} ハイライト {mo}.{d}.{y}")
+
 
 def _btn(label: str, url: str | None, quiet: bool = False, cls: str = "") -> str:
     if not url:
@@ -877,6 +889,13 @@ def _nextgame(g: dict, chip: str, updated: str | None) -> str:
             f'<p class="vs">vs {e(g["opponent"])}<small>{e(g["place"])}</small></p></div>')
 
 
+def _sent(items: list[dict]) -> str:
+    """通知した回数の言い方（後ろに「お知らせしました」が続く）：「いま見て！」を2回、「激アツ！」を1回"""
+    geki = sum(1 for a in items if a.get("kind") == "激アツ")
+    parts = ([f"「いま見て！」を{len(items) - geki}回"] if len(items) > geki else []) + ([f"「激アツ！」を{geki}回"] if geki else [])
+    return "、".join(parts)
+
+
 def _panel(inner: str, hot: bool = False, attrs: str = "", burst: bool = False) -> str:
     return f'<div class="panel{" hot" if hot else ""}{" burst" if burst else ""}"{attrs}>{inner}</div>'
 
@@ -897,7 +916,7 @@ def panel(state: dict) -> tuple[str, str]:
                f'{f"<span>{e(nice_clock(clock))}</span>" if clock else ""}<span>vs {e(g["opponent"])}</span>'
                f'<span class="upd">{e((up or "")[11:16])}時点</span></p>')
         word = "激アツ！" if burst else "いま見て！" if hot else ("そろそろ" if lv == "中" else "まだ大丈夫")
-        goal = "ゲージを突き破った！" if burst else "満タン！" if hot else f"満タンまで あと{100 - pct}%"
+        goal = "" if burst else "満タン！" if hot else f"満タンまで あと{100 - pct}%"
         say = g.get("text") or ("" if hot else "ゲージが満タンになったら、すぐにお知らせします。")
         inner = (f'{ctx}<p class="word">{word}</p>{readout(pct, goal=goal)}{gauge(pct)}'
                  f'{f"<p class=say>{e(say)}</p>" if say else ""}'
@@ -919,18 +938,18 @@ def panel(state: dict) -> tuple[str, str]:
         geki = peak > 100
         n = len(g["alerts"])
         if geki:
-            say = f"熱さが{peak}%まで上がり、ゲージを突き破った激アツ試合でした。" + (f"「いま見て！」は{n}回お知らせしました。" if n else "")
+            say = f"熱さが{peak}%まで上がった激アツ試合でした。" + (f"{_sent(g['alerts'])}お知らせしました。" if n else "")
         elif n:
-            say = f"ゲージが満タンになり、「いま見て！」を{n}回お知らせしました。"
+            say = f"ゲージが満タンになり、{_sent(g['alerts'])}お知らせしました。"
         elif g.get("tracked"):
             say = "この試合は、ゲージが満タンになる場面はありませんでした。"
         else:
             say = ""
-        link = (_btn("ハイライト動画を見る", g.get("highlight"))
-                or _btn("試合の記録を見る（B.LEAGUE公式）", g["url"], quiet=True))
+        link = (f'<div class="links">{_btn("YouTubeでハイライトを見る", highlight_url(g))}'
+                f'{_btn("試合の記録（B.LEAGUE公式）", g["url"], quiet=True)}</div>')
         inner = (f'<p class="ctx"><span class="chip">試合終了</span>{GEKI_CHIP if geki else ""}<span>vs {e(g["opponent"])}</span></p>'
                  f'<p class="word">{"激アツ試合" if geki else "試合終了"}</p>'
-                 f'{readout(peak, label="この試合の最高", goal="ゲージを突き破った！" if geki else "満タン＝通知") if heat else ""}'
+                 f'{readout(peak, label="この試合の最高", goal="" if geki else "満タン＝通知") if heat else ""}'
                  f'{gauge(peak) if heat else ""}'
                  f'{f"<p class=say>{e(say)}</p>" if say else ""}{link}')
         return _panel(inner, burst=geki), TITLE
@@ -1025,15 +1044,20 @@ def heat_chart(heat: list, marks: list[int], title: str, key: str) -> str:
 
 
 def _alert_marks(g: dict) -> list[int]:
-    ts = [clock_seconds(a.get("clock", "")) for a in g.get("alerts") or []]
+    """グラフの●：「いま見て！」を送った場面（「激アツ！」は100%の線の裂け目と札で示す）"""
+    ts = [clock_seconds(a.get("clock", "")) for a in g.get("alerts") or [] if a.get("kind") != "激アツ"]
     return [t for t in ts if t is not None]
+
+
+def _geki_tag(a: dict) -> str:
+    return f'<span class="chip geki">激アツ {int(a.get("pct") or 0)}%</span>' if a.get("kind") == "激アツ" else ""
 
 
 def _list(items: list[dict], plays: list[dict], empty: str, limit: int = 8) -> str:
     if items:
         rows = "".join(f'<li><span class="clock">{e(nice_clock(a.get("clock")))}</span>'
-                       f'<span>{e(a["text"])}</span><span class="when">{e(a["time"])}</span></li>' for a in items)
-        body = f'<h3 class="sub">「いま見て！」の場面</h3><ol class="moments">{rows}</ol>'
+                       f'<span>{_geki_tag(a)}{e(a["text"])}</span><span class="when">{e(a["time"])}</span></li>' for a in items)
+        body = f'<h3 class="sub">お知らせした場面</h3><ol class="moments">{rows}</ol>'
     else:
         body = f'<p class="note">{e(empty)}</p>' if empty else ""
     if plays:                                # レバンガの好プレー（通知はしない記録）。新しい順に limit 件まで
@@ -1061,7 +1085,7 @@ def last_section(state: dict) -> str:
     if not g:
         return ""
     heat = g.get("heat") or []
-    hl = _btn("ハイライト動画を見る", g.get("highlight"), quiet=True)
+    hl = _btn("YouTubeでハイライトを見る", highlight_url(g), quiet=True)
     links = f'<div class="links">{hl}</div>' if hl else ""
     meta = f'{g["md"]}（{g["wd"]}） vs {g["opponent"]}・{g["place"]}'
     if not heat:
@@ -1094,7 +1118,7 @@ def cta() -> str:
         line = _btn("LINEで受け取る", LINE_URL, quiet=True) if LINE_URL else ""
         return ('<div class="cta-area" data-cta-zone>'
                 '<button class="btn big pushbtn off-only" type="button" data-push>無料で通知を受け取る</button>'
-                '<div class="on-box on-only" role="status">この端末は通知オンです。満タンになったらお知らせします。'
+                '<div class="on-box on-only" role="status">この端末は通知オンです。満タンと激アツのときにお知らせします。'
                 '<button class="link" type="button" data-push-off>止める</button></div>'
                 '<p class="pushmsg" data-push-msg role="status" aria-live="polite"></p>'
                 '<p class="micro off-only">「許可」を選ぶだけ。会員登録もアプリもいりません。</p>'
@@ -1113,7 +1137,7 @@ def first_view(state: dict) -> tuple[str, str]:
             '<h1 class="hook"><span>レバンガ北海道の試合、</span><span>いまどれくらい熱い？</span></h1></div>'
             f'<div class="now" id="live-top" data-live>{top}</div>'
             '<div class="text"><p class="hook-sub">接戦・逆転・終盤の山場ほど、ゲージがたまります。'
-            '満タンになったらスマホに「いま見て！」が届き、100%を超えたら激アツ試合です。</p></div>'
+            '満タンになったらスマホに「いま見て！」、100%を超えたら「激アツ！」が届きます。</p></div>'
             f'{cta()}</div>'), title
 
 
@@ -1124,11 +1148,15 @@ def demo() -> str:
             '<span class="ap"><span>見どころなう</span><span>いま</span></span>'
             '<b>いま見て！ 佐賀戦</b><span>第4Q残り38秒、1ポゼッション差。レバンガが勝ち越し！</span></div>'
             '<figcaption>通知のイメージ</figcaption></figure></div>'
-            '<div class="burst-demo" data-burst-demo><h3>100%を超えると、激アツ試合</h3>'
+            '<div class="burst-demo" data-burst-demo><h3>100%を超えると、「激アツ！」も届く</h3>'
             f'<div class="panel burst still"><p class="ctx">{GEKI_CHIP}</p><p class="word">激アツ！</p>'
-            f'{readout(157, goal="ゲージを突き破った！")}{gauge(157)}</div>'
+            f'{readout(157, goal="")}{gauge(157)}</div>'
+            '<figure class="phone"><div class="toast"><span class="ic geki" aria-hidden="true">見</span>'
+            '<span class="ap"><span>見どころなう</span><span>いま</span></span>'
+            '<b>激アツ！ 佐賀戦</b><span>熱さ157%。延長戦、1ポゼッション差。レバンガが逆転！</span></div>'
+            '<figcaption>通知のイメージ</figcaption></figure>'
             '<p class="note">残り3分を切ってからの1ポゼッション差の逆転や、延長戦の競り合いなど、ふつうの接戦よりさらに熱い場面で、'
-            'ゲージを突き破ります（画面はイメージ）。</p></div>'
+            'ゲージが赤くなって突き破ります。残り3分と延長の各回で1回ずつお知らせします（画面はイメージ）。</p></div>'
             '<button class="link replay" type="button" data-demo-replay hidden>もう一度見る</button></div></section>')
 
 
@@ -1138,9 +1166,10 @@ FIT = ('<section><div class="wrap"><h2>こんなレバンガファンに</h2><ul
        '<li>それでも、接戦の終盤と逆転の瞬間だけは見逃したくない</li>'
        '</ul></div></section>')
 
-# 判定ルール v1.2 の過去60試合での試算（1試合平均1.23回、5点差以内で決着した23試合はすべて通知、20点差以上の13試合は0件）
+# 判定ルール v1.2＋激アツの通知を、2025-26シーズンの60試合で再生した試算（2026-10-12）：1試合平均1.38回（激アツの通知を入れる前は1.23回）、
+# 5点差以内で決着した23試合はすべて通知、20点差以上の13試合は0件。激アツの通知は18試合で19回
 PROOF = ('<section><div class="wrap"><h2>満タンになるのは、本当に熱い試合だけ</h2><div class="stats">'
-         '<div class="stat"><b>1.2<small>回</small></b><span>1試合あたりの<br>通知（平均）</span></div>'
+         '<div class="stat"><b>1.4<small>回</small></b><span>1試合あたりの<br>通知（平均）</span></div>'
          '<div class="stat"><b>23<small>/23</small></b><span>5点差以内で決着<br>した試合で満タン</span></div>'
          '<div class="stat"><b>0<small>回</small></b><span>20点差以上の<br>大差の試合</span></div>'
          '</div><p class="fine">過去シーズンのレバンガの60試合に、いまの判定ルールを当てはめた試算です。'
@@ -1155,7 +1184,7 @@ FLOW = ('<section><div class="wrap"><h2>試合の日、ゲージはこう動く<
         '<li class="hot"><span class="dot" aria-hidden="true">!</span><div><span class="when">最後の1分</span>'
         '<b>土壇場も、もう一度</b><p>満タンのまま終了間際に逆転・同点・勝ち越しがあれば、改めてお知らせします。</p></div></li>'
         '<li class="hot geki"><span class="dot" aria-hidden="true">!!</span><div><span class="when">さらに熱くなると</span>'
-        '<b>ゲージを突き破って、激アツ試合に</b><p>残り3分を切ってからの1ポゼッション差の逆転や、延長戦の競り合いでは、熱さが100%を超えます。</p></div></li>'
+        '<b>ゲージを突き破って、「激アツ！」が届く</b><p>残り3分を切ってからの1ポゼッション差の逆転や、延長戦の競り合いでは、熱さが100%を超えます。</p></div></li>'
         '<li><span class="dot" aria-hidden="true">✓</span><div><span class="when">試合のあと</span>'
         '<b>熱さの推移が残ります</b><p>このページで、試合のどこが熱かったかを振り返れます。</p></div></li>'
         '</ol><p class="fine">通知をタップすると、B.LEAGUE公式の試合ページが開きます。</p></div></section>')
@@ -1163,7 +1192,7 @@ FLOW = ('<section><div class="wrap"><h2>試合の日、ゲージはこう動く<
 STEPS = ('<section><div class="wrap"><h2>はじめ方は3ステップ</h2><ol class="steps">'
          '<li><div><b>ボタンを押す</b><span>会員登録もアプリのインストールもいりません</span></div></li>'
          '<li><div><b>通知を「許可」する</b><span>iPhoneはホーム画面に追加してから。やり方はボタンを押すと出ます</span></div></li>'
-         '<li><div><b>あとは待つだけ</b><span>ゲージが満タンになったら「いま見て！」が届きます</span></div></li>'
+         '<li><div><b>あとは待つだけ</b><span>満タンで「いま見て！」、100%を超えたら「激アツ！」が届きます</span></div></li>'
          '</ol></div></section>')
 
 
@@ -1192,18 +1221,19 @@ def share() -> str:
 FAQ_ITEMS = [
     ("熱さゲージとは何ですか？",
      "点差・残り時間・逆転や同点などの試合の流れから、いまどれくらい盛り上がっているかを表したものです。"
-     "100%（満タン）になると「いま見て！」をお知らせします。さらに熱くなって100%を超えると「激アツ」です。"),
+     "100%（満タン）になると「いま見て！」をお知らせします。さらに熱くなって100%を超えると「激アツ！」もお知らせします。"),
     ("無料ですか？", "はい、無料です。会員登録やアプリのインストールもいりません。"),
     ("どんなときに通知が届きますか？",
-     "熱さゲージが満タンになったときです。満タンになるのは第4Qと延長戦の接戦で、逆転・同点になったときや、"
-     "競ったまま残り3分に入ったときなどです。1試合おおむね1〜3回で、大差の試合や試合のない日は届きません。"),
+     "熱さゲージが満タンになったとき（「いま見て！」）と、さらに100%を超えたとき（「激アツ！」）です。"
+     "満タンになるのは第4Qと延長戦の接戦で、逆転・同点になったときや、競ったまま残り3分に入ったときなどです。"
+     "「激アツ！」は残り3分と延長の各回で1回まで。1試合おおむね1〜3回で、大差の試合や試合のない日は届きません。"),
     ("激アツ試合とは何ですか？",
      "熱さが100%を超えて、ゲージを突き破った試合です。残り3分を切ってからの1ポゼッション差の逆転や、延長戦の競り合いなど、"
-     "ふつうの接戦よりさらに熱い場面で起きます。過去の試合で試すと、ふつうの試合では7試合に1試合ほど、"
+     "ふつうの接戦よりさらに熱い場面で起き、そのときは「激アツ！」をお知らせします。過去の試合で試すと、ふつうの試合では7試合に1試合ほど、"
      "B.LEAGUEが特別なハイライトを作った劇的な試合では6割ほどが激アツ試合でした。"),
     ("ゲージはどれくらいの間隔で動きますか？",
-     ("試合中は、20秒ほどの間隔で動きます。通知は、満タンになった直後に届きます。" if API_BASE else
-      "試合中、このページのゲージは数分おきに新しくなります。通知は、満タンになった直後に届きます。")),
+     ("試合中は、20秒ほどの間隔で動きます。通知は、満タンや激アツになった直後に届きます。" if API_BASE else
+      "試合中、このページのゲージは数分おきに新しくなります。通知は、満タンや激アツになった直後に届きます。")),
     ("iPhoneでも使えますか？",
      "使えます（iOS 16.4以降）。Safariでこのページを開き、共有ボタンから「ホーム画面に追加」を選んだあと、"
      "ホーム画面のアイコンから開いて「無料で通知を受け取る」を押してください。"),

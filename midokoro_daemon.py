@@ -330,36 +330,36 @@ class Tracker:
         return "試合中"
 
     def judge(self, g: dict, t: datetime, ev: dict) -> None:
-        """「高」の場面で通知する。1試合で鳴るのは、おおむね次の3回まで
-           ・その試合で最初に「高」になったとき（落ち着いて「低」に戻ったあとは、もう一度）
-           ・残り3分（延長は各回）に入って「高」のとき
-           ・最後の1分の逆転・同点・勝ち越し"""
+        """通知するかを midokoro_score.notify_reasons() で決めて送る
+           ・満タン（「いま見て！」）：最初に満タン、残り3分・延長の各回に入って満タン、最後の1分の逆転・同点・勝ち越し
+           ・激アツ（「激アツ！」）：熱さが100%を超えたとき。残り3分・延長の各回で1回まで。
+             同じ試合で3分あけるきまりより優先する（満タンの直後でも送る）"""
+        from site_build import heat_pct
         key = g["key"]
         rec = self.alerts.setdefault(key, {"items": [], "line": False, "flags": []})
         flags = set(rec.setdefault("flags", []))
-        if ev["level"] == "低":
-            flags.discard("通常")
-        reason = None
-        if ev["level"] == "高":
-            if ev["phase"] not in flags:
-                reason = ev["phase"]
-            elif ev["period"] >= 4 and ev["rest"] <= 60 and ev["event"] in ("逆転", "同点", "勝ち越し") and "最後の1分" not in flags:
-                reason = "最後の1分"
-        if reason:
-            flags.add(reason)
+        reasons = midokoro_score.notify_reasons(flags, ev)
         rec["flags"] = sorted(flags)
-        if not reason:
+        if not reasons:
             return
         self.notified = True
-        rec["items"].append({"time": f"{t:%H:%M}", "clock": ev["clock"], "text": ev["headline"], "detail": ev["text"]})
-        log(f"見どころ（{reason}） {g['opponent']}戦: {ev['text']}（{ev['score']}）")
+        geki = midokoro_score.GEKI in reasons
+        pct = heat_pct(ev["score"])
+        item = {"time": f"{t:%H:%M}", "clock": ev["clock"], "text": ev["headline"], "detail": ev["text"]}
+        if geki:
+            item.update(kind="激アツ", pct=pct)
+            title, body = f"激アツ！ {g['opponent']}戦", f"熱さ{pct}%。{ev['text']}"
+        else:
+            title, body = f"いま見て！ {g['opponent']}戦", ev["text"]
+        rec["items"].append(item)
+        log(f"見どころ（{'・'.join(reasons)}） {g['opponent']}戦: {ev['text']}（{ev['score']}）")
         url = GAME_PAGE.format(key=key)
-        if key not in self.last_notify or t - self.last_notify[key] >= NOTIFY_COOLDOWN:
+        if geki or key not in self.last_notify or t - self.last_notify[key] >= NOTIFY_COOLDOWN:
             self.last_notify[key] = t
-            notify_web(f"いま見て！ {g['opponent']}戦", ev["text"], url)
+            notify_web(title, body, url)
         if not rec["line"]:
             rec["line"] = True                     # 無料枠節約のため1試合1回まで
-            notify_line(f"【見どころなう】いま見て！ {g['opponent']}戦\n{ev['text']}\n{url}")
+            notify_line(f"【見どころなう】{title}\n{body}\n{url}")
         save_alerts(self.alerts)
 
     def post_live(self, v: dict, t: datetime) -> None:
