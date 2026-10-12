@@ -8,10 +8,13 @@ B.LEAGUE・レバンガ北海道とは関係ありません。スコアそのも
 - GitHub Actions が10分おきに起動し、試合の前後だけ20秒ごとに公式の試合データを見て判定します（`midokoro_daemon.py`、判定ルールは `midokoro_score.py`）。
 - ページは `gh-pages` ブランチに置き、GitHub Pages で公開します（試合中は数分おきに更新）。
 - 盛り上がったら LINE 公式アカウントから一斉通知します（1試合1回）。
+- Webプッシュは Cloudflare Workers の受付窓口（`worker/`）が登録を受け付けて送ります。GitHub Actions からの依頼は、GitHubのOIDCトークンで本人確認します。
+- 利用状況（アクセス数・通知登録数）は `stats.html` で見られます（合言葉が必要）。Cookieは使わず、IPアドレスそのものは保存しません。
 
 ## 設定
 
 - Settings → Pages：Source を「Deploy from a branch」、ブランチを `gh-pages` / `(root)` にする
 - Settings → Secrets and variables → Actions
   - Secrets：`LINE_CHANNEL_ACCESS_TOKEN`
-  - Variables：`LINE_ADD_URL`（友だち追加リンク）、`SITE_URL`（このページのURL）
+  - Secrets：`CLOUDFLARE_API_TOKEN`、`CLOUDFLARE_ACCOUNT_ID`、`STATS_TOKEN`（利用状況ページの合言葉）
+  - Variables：`LINE_ADD_URL`（友だち追加リンク）、`SITE_URL`（このページのURL）、`MIDOKORO_API`（受付窓口のURL。deploy-api の実行結果に表示される）

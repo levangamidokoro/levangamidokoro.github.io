@@ -242,7 +242,10 @@ def notify_web(title: str, body: str, url: str) -> None:
     if not PUSH_ENABLED:
         return
     try:
-        import webpush
+        if os.environ.get("MIDOKORO_API"):       # GitHub版：Cloudflareの受付窓口から送る
+            import push_api as webpush
+        else:
+            import webpush
         n = webpush.send_all(title, body, url)
         log(f"Webプッシュ送信 {n}件")
     except Exception as e:

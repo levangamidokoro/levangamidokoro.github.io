@@ -118,7 +118,7 @@ SCRIPT = r"""
 (async () => {
   const msg = document.getElementById("np"), btn = document.getElementById("nb");
   if (!msg || !btn) return;
-  const API = "";
+  const API = document.body.dataset.api || "";
   const viaLine = msg.dataset.line === "1" ? "LINEで受け取れます。" : "";
   const ios = /iPhone|iPad|iPod/.test(navigator.userAgent);
   const standalone = matchMedia("(display-mode: standalone)").matches || navigator.standalone;
@@ -167,6 +167,9 @@ SCRIPT = r"""
   };
 })();
 """
+
+# アクセス数を1回数える（Cookieなし。数えるのは表示回数と、日ごとのおおよその訪問者数だけ）
+BEACON = """<script>try{navigator.sendBeacon(document.body.dataset.api+"/api/hit",new Blob(["{}"],{type:"text/plain"}))}catch(e){}</script>"""
 
 e = html.escape
 
@@ -292,7 +295,8 @@ def upcoming(state: dict) -> str:
     return f'<section><div class="wrap"><h2>この先の試合</h2><ul class="games">{rows}</ul></div></section>'
 
 
-PUSH_ENABLED = os.environ.get("MIDOKORO_PUSH", "1") != "0"   # GitHub版（受付サーバーなし）は 0
+PUSH_ENABLED = os.environ.get("MIDOKORO_PUSH", "1") != "0"   # 受付窓口がないときは 0
+API_BASE = os.environ.get("MIDOKORO_API", "").rstrip("/")   # GitHub版：Cloudflareの受付窓口
 
 
 def notify_block() -> str:
@@ -325,7 +329,7 @@ PAGE = """<!doctype html>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=BIZ+UDPGothic:wght@400;700&family=Dela+Gothic+One&display=swap">
 <style>{css}</style>
 </head>
-<body>
+<body data-api="{api}">
 <header class="site wrap"><h1 class="mark">見どころなう</h1><span class="edition">レバンガ北海道版（非公式）</span></header>
 <main>
 <div id="live">{hero}{moments}</div>
@@ -337,7 +341,7 @@ PAGE = """<!doctype html>
 <p>試合の映像と記録はB.LEAGUE公式でご覧ください。見どころの判定は試験運用中です。</p>
 <p>最終更新 {updated}</p>
 </footer>
-<script>{script}</script>
+<script>{script}</script>{beacon}
 </body></html>
 """
 
@@ -346,15 +350,20 @@ def render(state: dict) -> str:
     hero_html, title = hero(state)
     return PAGE.format(title=e(title), css=CSS, hero=hero_html, moments=moments(state),
                        notify=notify_block(), upcoming=upcoming(state),
-                       updated=e(state.get("updated", "-")), script=SCRIPT)
+                       updated=e(state.get("updated", "-")), script=SCRIPT, api=e(API_BASE),
+                       beacon=BEACON if API_BASE else "")
 
 
 def build() -> Path:
     state = json.loads(STATE_FILE.read_text(encoding="utf-8")) if STATE_FILE.exists() else {}
     OUT_DIR.mkdir(exist_ok=True)
-    for f in STATIC_DIR.glob("*"):                 # 通知用の部品とアイコンをコピー
+    for f in STATIC_DIR.glob("*"):                 # 通知用の部品・アイコン・利用状況ページをコピー
         dst = OUT_DIR / f.name
-        if f.is_file() and (not dst.exists() or dst.stat().st_mtime < f.stat().st_mtime):
+        if f.name == "stats.html":                 # 受付窓口のURLを埋め込む
+            text = f.read_text(encoding="utf-8").replace("__API__", html.escape(API_BASE))
+            if not dst.exists() or dst.read_text(encoding="utf-8") != text:
+                dst.write_text(text, encoding="utf-8")
+        elif f.is_file() and (not dst.exists() or dst.stat().st_mtime < f.stat().st_mtime):
             shutil.copy2(f, dst)
     out = OUT_DIR / "index.html"
     tmp = out.with_suffix(".tmp")

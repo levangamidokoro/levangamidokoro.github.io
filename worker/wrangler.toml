@@ -1,0 +1,18 @@
+# 見どころなう 受付窓口（Cloudflare Workers）
+# database_id はデプロイ用ワークフローが自動で書き込む
+name = "midokoro-api"
+main = "src/index.js"
+compatibility_date = "2024-09-23"
+workers_dev = true
+
+[vars]
+ALLOW_ORIGIN = "https://levangamidokoro.github.io"
+ALLOW_REPO = "levangamidokoro/levangamidokoro.github.io"
+
+[[d1_databases]]
+binding = "DB"
+database_name = "midokoro"
+database_id = "__DATABASE_ID__"
+
+[triggers]
+crons = ["17 18 * * *"]   # 毎日 03:17（日本時間）に古い記録を消す
