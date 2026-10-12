@@ -13,11 +13,13 @@
 //
 // 環境変数：ALLOW_ORIGIN, ALLOW_REPO（vars）
 // シークレット：VAPID_PUBLIC, VAPID_PRIVATE_JWK, STATS_TOKEN, HASH_SALT（初回デプロイ時に自動で作る。STATS_TOKENだけは本人が決める）
-//             GH_DISPATCH_TOKEN（任意）：収集プログラムを起こすためのGitHubのトークン（このリポジトリの Actions を読み書きできるだけのもの）
+//             GH_APP_ID, GH_APP_KEY（任意）：収集プログラムを起こすための GitHub App（組織の App。権限は Actions の読み書きだけ）。
+//               実行した人は App の名前で表示され、個人のアカウント名は出ない。GH_APP_KEY は PKCS#8 の秘密鍵（deploy-api が変換して入れる）
+//             GH_DISPATCH_TOKEN（任意・予備）：App がないときだけ使う個人のトークン
 //
 // 定期実行
 //   毎日 03:17（日本時間）      古い訪問記録を消す
-//   10分おき（GH_DISPATCH_TOKEN があるとき）  試合の前後と、1時間ごとに、収集プログラム（midokoro.yml）を起こす。
+//   10分おき（GitHub App があるとき）       試合の前後と、1時間ごとに、収集プログラム（midokoro.yml）を起こす。
 //                                    GitHub の schedule が動かないことがあるため、こちらから workflow_dispatch で起こす
 
 const KEEP_DAYS = 40;
@@ -194,13 +196,36 @@ async function needRun(now) {                // 試合の70分前〜開始3時�
   }
 }
 
+const GH = { Accept: "application/vnd.github+json", "X-GitHub-Api-Version": "2022-11-28", "User-Agent": "midokoro-api" };
+let appMemo = { v: null, exp: 0 };
+
+async function appToken(env) {               // GitHub App の鍵から、このリポジトリだけに使える1時間の鍵をもらう
+  if (appMemo.v && Date.now() < appMemo.exp) return appMemo.v;
+  const der = unb64u(String(env.GH_APP_KEY).replace(/-----[^-]+-----/g, "").replace(/\s+/g, "").replace(/\+/g, "-").replace(/\//g, "_"));
+  const key = await crypto.subtle.importKey("pkcs8", der, { name: "RSASSA-PKCS1-v1_5", hash: "SHA-256" }, false, ["sign"]);
+  const now = Math.floor(Date.now() / 1000);
+  const head = b64u(enc.encode(JSON.stringify({ alg: "RS256", typ: "JWT" })));
+  const claims = b64u(enc.encode(JSON.stringify({ iat: now - 60, exp: now + 540, iss: String(env.GH_APP_ID) })));
+  const jwt = `${head}.${claims}.${b64u(await crypto.subtle.sign("RSASSA-PKCS1-v1_5", key, enc.encode(`${head}.${claims}`)))}`;
+  const auth = { ...GH, Authorization: `Bearer ${jwt}` };
+  const inst = await fetch(`https://api.github.com/repos/${env.ALLOW_REPO}/installation`, { headers: auth });
+  if (!inst.ok) throw new Error(`installation ${inst.status}`);
+  const repo = String(env.ALLOW_REPO).split("/")[1];
+  const res = await fetch(`https://api.github.com/app/installations/${(await inst.json()).id}/access_tokens`, {
+    method: "POST", headers: auth, body: JSON.stringify({ repositories: [repo], permissions: { actions: "write" } }) });
+  if (!res.ok) throw new Error(`access_tokens ${res.status}`);
+  const t = await res.json();
+  appMemo = { v: t.token, exp: Date.parse(t.expires_at) - 5 * 60e3 };
+  return t.token;
+}
+
 async function kick(env) {
-  if (!env.GH_DISPATCH_TOKEN) return;
+  const useApp = !!(env.GH_APP_ID && env.GH_APP_KEY);
+  if (!useApp && !env.GH_DISPATCH_TOKEN) return;
   const api = `https://api.github.com/repos/${env.ALLOW_REPO}/actions/workflows/midokoro.yml`;
-  const hdr = { Authorization: `Bearer ${env.GH_DISPATCH_TOKEN}`, Accept: "application/vnd.github+json",
-                "X-GitHub-Api-Version": "2022-11-28", "User-Agent": "midokoro-api" };
   try {
     if (!(await needRun(Date.now()))) return;
+    const hdr = { ...GH, Authorization: `Bearer ${useApp ? await appToken(env) : env.GH_DISPATCH_TOKEN}` };
     for (const status of ["in_progress", "queued"]) {          // もう動いている・待っているなら起こさない
       const r = await fetch(`${api}/runs?status=${status}&per_page=1`, { headers: hdr });
       if (r.ok && (await r.json()).total_count > 0) return;

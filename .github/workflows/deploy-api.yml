@@ -2,8 +2,10 @@
 # 必要なもの（Settings → Secrets and variables → Actions → Secrets）
 #   CLOUDFLARE_API_TOKEN, CLOUDFLARE_ACCOUNT_ID：Cloudflareで発行したもの
 #   STATS_TOKEN：利用状況ページを見るための合言葉（自分で決める）
-#   GH_DISPATCH_TOKEN（任意）：収集プログラムを10分おきに起こすためのGitHubのトークン
-#     （Fine-grained token。対象はこのリポジトリだけ、権限は Actions の Read and write だけ）
+#   GH_APP_ID, GH_APP_PRIVATE_KEY（任意）：収集プログラムを10分おきに起こすための GitHub App
+#     （組織 levangamidokoro の App。権限は Actions の Read and write だけ。このリポジトリにだけ入れる）
+#     GH_APP_PRIVATE_KEY は App の画面で作った .pem の中身をそのまま貼る
+#   GH_DISPATCH_TOKEN（任意・予備）：App を使わない場合の個人のトークン
 # Webプッシュの鍵などは初回に自動で作り、Cloudflareの中にだけ保存する（GitHubにもログにも出さない）
 name: deploy-api
 
@@ -27,6 +29,8 @@ jobs:
       CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
       STATS_TOKEN: ${{ secrets.STATS_TOKEN }}
       GH_DISPATCH_TOKEN: ${{ secrets.GH_DISPATCH_TOKEN }}
+      GH_APP_ID: ${{ secrets.GH_APP_ID }}
+      GH_APP_PRIVATE_KEY: ${{ secrets.GH_APP_PRIVATE_KEY }}
     steps:
       - uses: actions/checkout@v4
 
@@ -77,11 +81,15 @@ jobs:
             rm -f /tmp/keys.json
             echo "::notice::Webプッシュの鍵を新しく作りました"
           fi
-          if [ -n "$GH_DISPATCH_TOKEN" ]; then
+          if [ -n "$GH_APP_ID" ] && [ -n "$GH_APP_PRIVATE_KEY" ]; then
+            printf '%s' "$GH_APP_ID" | npx wrangler secret put GH_APP_ID >/dev/null
+            printf '%s\n' "$GH_APP_PRIVATE_KEY" | openssl pkcs8 -topk8 -nocrypt | npx wrangler secret put GH_APP_KEY >/dev/null
+            echo "::notice::GitHub App で収集プログラムを10分おきに起こす設定をしました"
+          elif [ -n "$GH_DISPATCH_TOKEN" ]; then
             printf '%s' "$GH_DISPATCH_TOKEN" | npx wrangler secret put GH_DISPATCH_TOKEN >/dev/null
-            echo "::notice::収集プログラムを10分おきに起こす設定をしました"
+            echo "::notice::個人のトークンで収集プログラムを10分おきに起こす設定をしました"
           else
-            echo "::warning::GH_DISPATCH_TOKEN が未登録です。収集プログラムは GitHub の schedule だけで起動します"
+            echo "::warning::GitHub App が未登録です。収集プログラムは GitHub の schedule と手動の実行だけで起動します"
           fi
           if [ -n "$STATS_TOKEN" ]; then
             printf '%s' "$STATS_TOKEN" | npx wrangler secret put STATS_TOKEN >/dev/null
