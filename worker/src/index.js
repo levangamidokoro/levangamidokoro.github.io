@@ -13,6 +13,12 @@
 //
 // 環境変数：ALLOW_ORIGIN, ALLOW_REPO（vars）
 // シークレット：VAPID_PUBLIC, VAPID_PRIVATE_JWK, STATS_TOKEN, HASH_SALT（初回デプロイ時に自動で作る。STATS_TOKENだけは本人が決める）
+//             GH_DISPATCH_TOKEN（任意）：収集プログラムを起こすためのGitHubのトークン（このリポジトリの Actions を読み書きできるだけのもの）
+//
+// 定期実行
+//   毎日 03:17（日本時間）      古い訪問記録を消す
+//   10分おき（GH_DISPATCH_TOKEN があるとき）  試合の前後と、1時間ごとに、収集プログラム（midokoro.yml）を起こす。
+//                                    GitHub の schedule が動かないことがあるため、こちらから workflow_dispatch で起こす
 
 const KEEP_DAYS = 40;
 const MAX_BODY = 8 * 1024;
@@ -168,6 +174,44 @@ async function githubOk(env, req) {
 
 const BATCH = 40;   // 無料プランは1回の呼び出しで外部への送信が50件まで
 
+// ---------- 収集プログラムを起こす（GitHub の schedule の代わり） ----------
+const KICK_CRON = "3,13,23,33,43,53 * * * *";
+const SITE_STATE = "https://levangamidokoro.github.io/data/state.json";
+
+async function needRun(now) {                // 試合の70分前〜開始3時間後、または1時間以上ページが更新されていないとき
+  try {
+    const st = await (await fetch(SITE_STATE + "?t=" + now, { cf: { cacheTtl: 0 } })).json();
+    const upd = Date.parse((st.updated || "").replace(" ", "T") + ":00+09:00");
+    if (!(now - upd < 55 * 60e3)) return true;
+    const g = st.today;
+    if (g && /^\d{1,2}:\d{2}$/.test(g.start || "") && g.status !== "終了") {
+      const start = Date.parse(`${g.date}T${g.start.padStart(5, "0")}:00+09:00`);
+      if (now >= start - 70 * 60e3 && now <= start + 3 * 3600e3) return true;
+    }
+    return false;
+  } catch (e) {
+    return true;                               // 読めないときは起こしておく
+  }
+}
+
+async function kick(env) {
+  if (!env.GH_DISPATCH_TOKEN) return;
+  const api = `https://api.github.com/repos/${env.ALLOW_REPO}/actions/workflows/midokoro.yml`;
+  const hdr = { Authorization: `Bearer ${env.GH_DISPATCH_TOKEN}`, Accept: "application/vnd.github+json",
+                "X-GitHub-Api-Version": "2022-11-28", "User-Agent": "midokoro-api" };
+  try {
+    if (!(await needRun(Date.now()))) return;
+    for (const status of ["in_progress", "queued"]) {          // もう動いている・待っているなら起こさない
+      const r = await fetch(`${api}/runs?status=${status}&per_page=1`, { headers: hdr });
+      if (r.ok && (await r.json()).total_count > 0) return;
+    }
+    const res = await fetch(`${api}/dispatches`, { method: "POST", headers: hdr, body: JSON.stringify({ ref: "main" }) });
+    await bump(env, res.status === 204 ? "kick" : "kick_fail");
+  } catch (e) {
+    await bump(env, "kick_fail");
+  }
+}
+
 // ---------- 試合中の「いまの熱さ」 ----------
 const LIVE_MAX_AGE = 4 * 3600;            // 4時間より古いものは返さない
 let liveMemo = { t: 0, v: null };         // 同じ場所への問い合わせが続いたら、5秒だけ使い回す
@@ -285,7 +329,8 @@ export default {
       return json({ ok: false }, 500, h);
     }
   },
-  async scheduled(_ev, env) {
+  async scheduled(ev, env, ctx) {
+    if (ev.cron === KICK_CRON) { ctx.waitUntil(kick(env)); return; }
     await purge(env);
   },
 };
