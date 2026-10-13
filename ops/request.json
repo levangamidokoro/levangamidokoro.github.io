@@ -1,1 +1,1 @@
-{"id": "init", "run": []}
+{"id": "2026-10-13-test1", "run": [{"workflow": "app-test.yml"}]}
