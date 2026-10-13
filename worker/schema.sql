@@ -23,3 +23,8 @@ CREATE TABLE IF NOT EXISTS live (    -- 試合中の「いまの熱さ」（1行
   body TEXT NOT NULL,
   at   INTEGER NOT NULL
 );
+
+CREATE TABLE IF NOT EXISTS kv (      -- 小さな覚え書き（実行の依頼を最後にどこまで処理したか など）
+  k TEXT PRIMARY KEY,
+  v TEXT NOT NULL
+);

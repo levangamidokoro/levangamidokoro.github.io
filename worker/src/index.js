@@ -219,13 +219,41 @@ async function appToken(env) {               // GitHub App の鍵から、この
   return t.token;
 }
 
+// 実行の依頼：リポジトリの ops/request.json（main）に新しい id が書かれたら、決まったワークフローだけを App の名前で起動する。
+// 開発者の push や手動実行で個人のアカウント名が Actions に出ないようにするため
+const RUNNABLE = ["midokoro.yml", "deploy-api.yml", "push-test.yml", "live-test.yml", "app-test.yml", "check.yml"];
+
+async function handleRequest(env, hdr) {
+  let q;
+  try {
+    const r = await fetch(`https://raw.githubusercontent.com/${env.ALLOW_REPO}/main/ops/request.json?t=${Date.now()}`, { cf: { cacheTtl: 0 } });
+    if (!r.ok) return false;
+    q = await r.json();
+  } catch (e) { return false; }
+  if (!q || !q.id) return false;
+  const done = await env.DB.prepare("SELECT v FROM kv WHERE k = 'request'").first("v");
+  if (String(q.id) === done) return false;
+  await env.DB.prepare("INSERT INTO kv (k, v) VALUES ('request', ?1) ON CONFLICT(k) DO UPDATE SET v = ?1").bind(String(q.id)).run();
+  let ran = false;
+  for (const job of (Array.isArray(q.run) ? q.run : []).slice(0, 3)) {
+    if (!job || !RUNNABLE.includes(job.workflow)) continue;
+    const inputs = Object.fromEntries(Object.entries(job.inputs || {}).slice(0, 5).map(([k, v]) => [String(k).slice(0, 40), String(v).slice(0, 200)]));
+    const res = await fetch(`https://api.github.com/repos/${env.ALLOW_REPO}/actions/workflows/${job.workflow}/dispatches`,
+      { method: "POST", headers: hdr, body: JSON.stringify({ ref: "main", inputs }) });
+    await bump(env, res.status === 204 ? "request" : "request_fail");
+    if (job.workflow === "midokoro.yml" && res.status === 204) ran = true;
+  }
+  return ran;
+}
+
 async function kick(env) {
   const useApp = !!(env.GH_APP_ID && env.GH_APP_KEY);
   if (!useApp && !env.GH_DISPATCH_TOKEN) return;
   const api = `https://api.github.com/repos/${env.ALLOW_REPO}/actions/workflows/midokoro.yml`;
   try {
-    if (!(await needRun(Date.now()))) return;
     const hdr = { ...GH, Authorization: `Bearer ${useApp ? await appToken(env) : env.GH_DISPATCH_TOKEN}` };
+    if (await handleRequest(env, hdr)) return;
+    if (!(await needRun(Date.now()))) return;
     for (const status of ["in_progress", "queued"]) {          // もう動いている・待っているなら起こさない
       const r = await fetch(`${api}/runs?status=${status}&per_page=1`, { headers: hdr });
       if (r.ok && (await r.json()).total_count > 0) return;

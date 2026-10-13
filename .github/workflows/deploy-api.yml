@@ -9,11 +9,9 @@
 # Webプッシュの鍵などは初回に自動で作り、Cloudflareの中にだけ保存する（GitHubにもログにも出さない）
 name: deploy-api
 
+# 起動は手動か、ops/request.json による依頼（受付窓口が GitHub App で起こす）。push では動かさない（実行者に個人名が出るため）
 on:
   workflow_dispatch:
-  push:
-    branches: [main]
-    paths: ["worker/**", ".github/workflows/deploy-api.yml"]
 
 permissions:
   contents: read
