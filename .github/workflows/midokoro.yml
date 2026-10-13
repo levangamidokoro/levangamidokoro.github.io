@@ -1,10 +1,10 @@
 # 見どころなう レバンガ北海道版：GitHub Actions で収集・判定し、GitHub Pages にページを出す
-# 10分おきに起動。試合が近い・試合中なら終わるまで動き（20秒ごと）、なければすぐ終了する
+# 起動は受付窓口（Cloudflare Worker）の定期実行が GitHub App（midokoro-starter）で行う（試合の70分前〜開始3時間後と、1時間ごと）。
+# GitHub の schedule はほとんど動かず、動くと個人のアカウント名が出るため使わない。手動の Run workflow もできる。
+# 試合が近い・試合中なら終わるまで動き（20秒ごと）、なければすぐ終了する
 name: midokoro
 
 on:
-  schedule:
-    - cron: "4,14,24,34,44,54 * * * *"
   workflow_dispatch:
     inputs:
       force_publish:
