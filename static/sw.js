@@ -10,6 +10,7 @@ self.addEventListener("push", (event) => {
     icon: "icon-192.png",
     badge: "icon-192.png",
     data: { url: d.url },
+    ...(d.image ? { image: d.image } : {}),   // 大きなゲージの画像（Android・パソコン。iPhoneは表示しない）
     tag: d.title,        // 同じ試合の通知はまとめる
     renotify: true,
   }));

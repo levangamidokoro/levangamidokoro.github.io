@@ -51,13 +51,13 @@ def post_live(state: dict) -> None:
     r.raise_for_status()
 
 
-def send_all(title: str, body: str, url: str) -> int:
+def send_all(title: str, body: str, url: str, image: str | None = None) -> int:
     """登録者全員に送る（窓口が40件ずつ送り、続きの位置を返す）。送れた件数を返す"""
     hdr = {"Authorization": f"Bearer {_github_token()}"}
     cursor, total = 0, 0
     for _ in range(2000):
         r = requests.post(f"{API}/api/notify", params={"cursor": cursor}, headers=hdr,
-                          json={"title": title, "body": body, "url": url}, timeout=60)
+                          json={"title": title, "body": body, "url": url, "image": image or ""}, timeout=60)
         r.raise_for_status()
         d = r.json()
         total += d.get("sent", 0)

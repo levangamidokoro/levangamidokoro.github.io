@@ -223,6 +223,8 @@ h3.sub{font-size:14px;margin:24px 0 4px;color:var(--sub);font-weight:700}
 .toast .ap{display:flex;justify-content:space-between;font-size:11px;color:var(--sub)}
 .toast b{font-size:15px;font-weight:900}
 .toast .ic.geki{background:var(--hot-deep);color:#FFFFFF}
+.toast .tg{font-weight:900;letter-spacing:.02em;color:var(--series)}
+.toast .tg.geki{color:var(--hotline)}
 @keyframes drop{from{transform:translateY(-30px) scale(.96);opacity:0}to{transform:none;opacity:1}}
 .replay{justify-self:center;display:block;margin:10px auto 0}
 .burst-demo{display:grid;gap:12px;justify-items:center;margin-top:30px}
@@ -495,7 +497,7 @@ const mdClock = (() => {
       if (!r.ok) { try { await sub.unsubscribe(); } catch (e) {} sub = null; throw new Error("subscribe"); }
       set("on");
       try {
-        reg.showNotification("通知をオンにしました", { body: "レバンガの試合の熱さゲージが満タンになったら「いま見て！」、100%を超えたら「激アツ！」を、こんなふうにお知らせします。",
+        reg.showNotification("通知をオンにしました", { body: "▰▰▰▰▰▰▰▰▰▰ 100%\n満タンで「いま見て！」、100%を超えたら「激アツ！」をお知らせします",
           icon: "icon-192.png", badge: "icon-192.png", tag: "welcome", data: { url: "./" } });
       } catch (e) {}
     } catch (e) {
@@ -1146,14 +1148,14 @@ def demo() -> str:
             f'<div class="panel">{readout(100, goal="満タンで通知", attr=" data-demo-fig")}{gauge(100)}</div>'
             '<figure class="phone"><div class="toast"><span class="ic" aria-hidden="true">見</span>'
             '<span class="ap"><span>見どころなう</span><span>いま</span></span>'
-            '<b>いま見て！ 佐賀戦</b><span>第4Q残り38秒、1ポゼッション差。レバンガが勝ち越し！</span></div>'
+            '<b>いま見て！ 佐賀戦</b><span><span class="tg">▰▰▰▰▰▰▰▰▰▰ 100%</span><br>レバンガが勝ち越し！</span></div>'
             '<figcaption>通知のイメージ</figcaption></figure></div>'
             '<div class="burst-demo" data-burst-demo><h3>100%を超えると、「激アツ！」も届く</h3>'
             f'<div class="panel burst still"><p class="ctx">{GEKI_CHIP}</p><p class="word">激アツ！</p>'
             f'{readout(157, goal="")}{gauge(157)}</div>'
             '<figure class="phone"><div class="toast"><span class="ic geki" aria-hidden="true">見</span>'
             '<span class="ap"><span>見どころなう</span><span>いま</span></span>'
-            '<b>激アツ！ 佐賀戦</b><span>熱さ157%。延長戦、1ポゼッション差。レバンガが逆転！</span></div>'
+            '<b>激アツ！ 佐賀戦</b><span><span class="tg geki">▰▰▰▰▰▰▰▰▰▰🔥 157%</span><br>レバンガが逆転！</span></div>'
             '<figcaption>通知のイメージ</figcaption></figure>'
             '<p class="note">残り3分を切ってからの1ポゼッション差の逆転や、延長戦の競り合いなど、ふつうの接戦よりさらに熱い場面で、'
             'ゲージが赤くなって突き破ります。残り3分と延長の各回で1回ずつお知らせします（画面はイメージ）。</p></div>'

@@ -240,7 +240,7 @@ def save_alerts(alerts: dict) -> None:
 
 # ---------- 通知 ----------
 
-def notify_web(title: str, body: str, url: str) -> None:
+def notify_web(title: str, body: str, url: str, image: str | None = None) -> None:
     if not PUSH_ENABLED:
         return
     try:
@@ -248,7 +248,7 @@ def notify_web(title: str, body: str, url: str) -> None:
             import push_api as webpush
         else:
             import webpush
-        n = webpush.send_all(title, body, url)
+        n = webpush.send_all(title, body, url, image)
         log(f"Webプッシュ送信 {n}件")
     except Exception as e:
         log(f"Webプッシュ失敗: {e}")
@@ -308,6 +308,12 @@ def view(g: dict, alerts: dict, ev: dict | None, status: str) -> dict:
     }
 
 
+def gauge_text(pct: int) -> str:
+    """通知用の記号のゲージ：満タンは ▰×10、100%を超えたら炎を足す"""
+    lit = min(10, max(0, pct // 10))
+    return "▰" * lit + "▱" * (10 - lit) + ("🔥" if pct > 100 else "") + f" {pct}%"
+
+
 class Tracker:
     def __init__(self):
         self.alerts = load_alerts()
@@ -334,7 +340,7 @@ class Tracker:
            ・満タン（「いま見て！」）：最初に満タン、残り3分・延長の各回に入って満タン、最後の1分の逆転・同点・勝ち越し
            ・激アツ（「激アツ！」）：熱さが100%を超えたとき。残り3分・延長の各回で1回まで。
              同じ試合で3分あけるきまりより優先する（満タンの直後でも送る）"""
-        from site_build import heat_pct
+        from site_build import SITE_URL, heat_pct
         key = g["key"]
         rec = self.alerts.setdefault(key, {"items": [], "line": False, "flags": []})
         flags = set(rec.setdefault("flags", []))
@@ -346,17 +352,21 @@ class Tracker:
         geki = midokoro_score.GEKI in reasons
         pct = heat_pct(ev["score"])
         item = {"time": f"{t:%H:%M}", "clock": ev["clock"], "text": ev["headline"], "detail": ev["text"]}
+        # 通知はゲージが主役：1行目に記号のゲージと熱さ、2行目に一言。Android・パソコンには同じゲージの画像も付ける
+        body = f"{gauge_text(pct)}\n{ev['headline']}"
         if geki:
             item.update(kind="激アツ", pct=pct)
-            title, body = f"激アツ！ {g['opponent']}戦", f"熱さ{pct}%。{ev['text']}"
+            title = f"激アツ！ {g['opponent']}戦"
+            image = f"{SITE_URL}push-burst-{min(8, max(1, -(-(pct - 100) // 10)))}.png"
         else:
-            title, body = f"いま見て！ {g['opponent']}戦", ev["text"]
+            title = f"いま見て！ {g['opponent']}戦"
+            image = f"{SITE_URL}push-full.png"
         rec["items"].append(item)
         log(f"見どころ（{'・'.join(reasons)}） {g['opponent']}戦: {ev['text']}（{ev['score']}）")
         url = GAME_PAGE.format(key=key)
         if geki or key not in self.last_notify or t - self.last_notify[key] >= NOTIFY_COOLDOWN:
             self.last_notify[key] = t
-            notify_web(title, body, url)
+            notify_web(title, body, url, image)
         if not rec["line"]:
             rec["line"] = True                     # 無料枠節約のため1試合1回まで
             notify_line(f"【見どころなう】{title}\n{body}\n{url}")

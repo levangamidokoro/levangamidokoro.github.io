@@ -353,7 +353,8 @@ export default {
       if (url.pathname === "/api/notify" && req.method === "POST") {
         if (!(await githubOk(env, req))) return json({ ok: false }, 401, h);
         const r = await body(req);
-        const payload = JSON.stringify({ title: String(r.title || "見どころなう"), body: String(r.body || ""), url: String(r.url || "./") });
+        const image = /^https:\/\/levangamidokoro\.github\.io\/[\w.-]+\.png$/.test(String(r.image || "")) ? String(r.image) : "";   // 自分のページの画像だけ
+        const payload = JSON.stringify({ title: String(r.title || "見どころなう").slice(0, 80), body: String(r.body || "").slice(0, 200), url: String(r.url || "./"), image });
         const cursor = Number(url.searchParams.get("cursor") || 0);
         const rows = (await env.DB.prepare("SELECT rowid AS id, endpoint, p256dh, auth FROM subs WHERE rowid > ?1 ORDER BY rowid LIMIT ?2").bind(cursor, BATCH).all()).results;
         let sent = 0, failed = 0; const gone = [], why = [];

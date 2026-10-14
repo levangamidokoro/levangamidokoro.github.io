@@ -1,1 +1,1 @@
-{"id": "2026-10-13-test1", "run": [{"workflow": "app-test.yml"}]}
+{"id": "2026-10-14-gauge-push", "run": [{"workflow": "deploy-api.yml"}, {"workflow": "midokoro.yml", "inputs": {"force_publish": "true"}}]}
