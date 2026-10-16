@@ -1,5 +1,5 @@
 {
- "updated": "2026-10-16 19:08",
+ "updated": "2026-10-16 19:14",
  "today": {
   "key": "506466",
   "date": "2026-10-16",
@@ -11,15 +11,41 @@
   "place": "アウェイ（佐賀県）",
   "url": "https://www.bleague.jp/game_detail/?ScheduleKey=506466&tab=1",
   "highlight": null,
-  "status": "まもなく",
-  "level": null,
-  "meter": null,
-  "text": null,
-  "clock": null,
+  "status": "試合中",
+  "level": "低",
+  "meter": 20,
+  "text": "第1Q、1ポゼッション差。レバンガが逆転！",
+  "clock": "1Q 7:55",
   "alerts": [],
-  "plays": [],
-  "heat": [],
-  "tracked": false
+  "plays": [
+   {
+    "clock": "1Q 8:33",
+    "text": "逆転・3P　島谷 怜"
+   }
+  ],
+  "heat": [
+   [
+    30,
+    15
+   ],
+   [
+    60,
+    15
+   ],
+   [
+    90,
+    20
+   ],
+   [
+    120,
+    20
+   ],
+   [
+    125,
+    20
+   ]
+  ],
+  "tracked": true
  },
  "next": [
   {
