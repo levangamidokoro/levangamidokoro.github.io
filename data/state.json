@@ -1,5 +1,5 @@
 {
- "updated": "2026-10-16 20:59",
+ "updated": "2026-10-16 21:05",
  "today": {
   "key": "506466",
   "date": "2026-10-16",
@@ -11,11 +11,11 @@
   "place": "アウェイ（佐賀県）",
   "url": "https://www.bleague.jp/game_detail/?ScheduleKey=506466&tab=1",
   "highlight": null,
-  "status": "試合中",
-  "level": "低",
-  "meter": 40,
-  "text": "第4Q残り1分56秒。",
-  "clock": "4Q 1:56",
+  "status": "終了",
+  "level": null,
+  "meter": null,
+  "text": null,
+  "clock": null,
   "alerts": [],
   "plays": [
    {
@@ -77,6 +77,14 @@
    {
     "clock": "4Q 5:03",
     "text": "3P　ドワイト・ラモス"
+   },
+   {
+    "clock": "4Q 1:38",
+    "text": "ダンク　木林 優"
+   },
+   {
+    "clock": "4Q 0:09",
+    "text": "3P　菊地 広人"
    }
   ],
   "heat": [
@@ -385,8 +393,16 @@
     40
    ],
    [
-    2284,
-    40
+    2310,
+    55
+   ],
+   [
+    2340,
+    55
+   ],
+   [
+    2370,
+    55
    ]
   ],
   "tracked": true
