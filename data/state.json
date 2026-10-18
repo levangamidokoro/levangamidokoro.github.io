@@ -1,6 +1,114 @@
 {
- "updated": "2026-10-19 04:14",
- "today": {
+ "updated": "2026-10-19 05:14",
+ "today": null,
+ "next": [
+  {
+   "key": "506486",
+   "date": "2026-10-21",
+   "md": "10/21",
+   "wd": "水",
+   "start": "19:05",
+   "opponent": "富山",
+   "is_home": true,
+   "place": "ホーム",
+   "url": "https://www.bleague.jp/game_detail/?ScheduleKey=506486&tab=1",
+   "highlight": null,
+   "status": "予定",
+   "level": null,
+   "meter": null,
+   "text": null,
+   "clock": null,
+   "alerts": [],
+   "plays": [],
+   "heat": [],
+   "tracked": false
+  },
+  {
+   "key": "506507",
+   "date": "2026-10-24",
+   "md": "10/24",
+   "wd": "土",
+   "start": "14:05",
+   "opponent": "広島",
+   "is_home": false,
+   "place": "アウェイ（広島県）",
+   "url": "https://www.bleague.jp/game_detail/?ScheduleKey=506507&tab=1",
+   "highlight": null,
+   "status": "予定",
+   "level": null,
+   "meter": null,
+   "text": null,
+   "clock": null,
+   "alerts": [],
+   "plays": [],
+   "heat": [],
+   "tracked": false
+  },
+  {
+   "key": "506523",
+   "date": "2026-10-31",
+   "md": "10/31",
+   "wd": "土",
+   "start": "15:05",
+   "opponent": "茨城",
+   "is_home": false,
+   "place": "アウェイ（茨城県）",
+   "url": "https://www.bleague.jp/game_detail/?ScheduleKey=506523&tab=1",
+   "highlight": null,
+   "status": "予定",
+   "level": null,
+   "meter": null,
+   "text": null,
+   "clock": null,
+   "alerts": [],
+   "plays": [],
+   "heat": [],
+   "tracked": false
+  },
+  {
+   "key": "506534",
+   "date": "2026-11-01",
+   "md": "11/1",
+   "wd": "日",
+   "start": "15:05",
+   "opponent": "茨城",
+   "is_home": false,
+   "place": "アウェイ（茨城県）",
+   "url": "https://www.bleague.jp/game_detail/?ScheduleKey=506534&tab=1",
+   "highlight": null,
+   "status": "予定",
+   "level": null,
+   "meter": null,
+   "text": null,
+   "clock": null,
+   "alerts": [],
+   "plays": [],
+   "heat": [],
+   "tracked": false
+  },
+  {
+   "key": "506545",
+   "date": "2026-11-06",
+   "md": "11/6",
+   "wd": "金",
+   "start": "19:05",
+   "opponent": "秋田",
+   "is_home": true,
+   "place": "ホーム",
+   "url": "https://www.bleague.jp/game_detail/?ScheduleKey=506545&tab=1",
+   "highlight": null,
+   "status": "予定",
+   "level": null,
+   "meter": null,
+   "text": null,
+   "clock": null,
+   "alerts": [],
+   "plays": [],
+   "heat": [],
+   "tracked": false
+  }
+ ],
+ "last": {
   "key": "506474",
   "date": "2026-10-18",
   "md": "10/18",
@@ -383,520 +491,6 @@
    [
     2370,
     40
-   ]
-  ],
-  "tracked": true
- },
- "next": [
-  {
-   "key": "506486",
-   "date": "2026-10-21",
-   "md": "10/21",
-   "wd": "水",
-   "start": "19:05",
-   "opponent": "富山",
-   "is_home": true,
-   "place": "ホーム",
-   "url": "https://www.bleague.jp/game_detail/?ScheduleKey=506486&tab=1",
-   "highlight": null,
-   "status": "予定",
-   "level": null,
-   "meter": null,
-   "text": null,
-   "clock": null,
-   "alerts": [],
-   "plays": [],
-   "heat": [],
-   "tracked": false
-  },
-  {
-   "key": "506507",
-   "date": "2026-10-24",
-   "md": "10/24",
-   "wd": "土",
-   "start": "14:05",
-   "opponent": "広島",
-   "is_home": false,
-   "place": "アウェイ（広島県）",
-   "url": "https://www.bleague.jp/game_detail/?ScheduleKey=506507&tab=1",
-   "highlight": null,
-   "status": "予定",
-   "level": null,
-   "meter": null,
-   "text": null,
-   "clock": null,
-   "alerts": [],
-   "plays": [],
-   "heat": [],
-   "tracked": false
-  },
-  {
-   "key": "506523",
-   "date": "2026-10-31",
-   "md": "10/31",
-   "wd": "土",
-   "start": "15:05",
-   "opponent": "茨城",
-   "is_home": false,
-   "place": "アウェイ（茨城県）",
-   "url": "https://www.bleague.jp/game_detail/?ScheduleKey=506523&tab=1",
-   "highlight": null,
-   "status": "予定",
-   "level": null,
-   "meter": null,
-   "text": null,
-   "clock": null,
-   "alerts": [],
-   "plays": [],
-   "heat": [],
-   "tracked": false
-  },
-  {
-   "key": "506534",
-   "date": "2026-11-01",
-   "md": "11/1",
-   "wd": "日",
-   "start": "15:05",
-   "opponent": "茨城",
-   "is_home": false,
-   "place": "アウェイ（茨城県）",
-   "url": "https://www.bleague.jp/game_detail/?ScheduleKey=506534&tab=1",
-   "highlight": null,
-   "status": "予定",
-   "level": null,
-   "meter": null,
-   "text": null,
-   "clock": null,
-   "alerts": [],
-   "plays": [],
-   "heat": [],
-   "tracked": false
-  },
-  {
-   "key": "506545",
-   "date": "2026-11-06",
-   "md": "11/6",
-   "wd": "金",
-   "start": "19:05",
-   "opponent": "秋田",
-   "is_home": true,
-   "place": "ホーム",
-   "url": "https://www.bleague.jp/game_detail/?ScheduleKey=506545&tab=1",
-   "highlight": null,
-   "status": "予定",
-   "level": null,
-   "meter": null,
-   "text": null,
-   "clock": null,
-   "alerts": [],
-   "plays": [],
-   "heat": [],
-   "tracked": false
-  }
- ],
- "last": {
-  "key": "506466",
-  "date": "2026-10-16",
-  "md": "10/16",
-  "wd": "金",
-  "start": "19:05",
-  "opponent": "佐賀",
-  "is_home": false,
-  "place": "アウェイ（佐賀県）",
-  "url": "https://www.bleague.jp/game_detail/?ScheduleKey=506466&tab=1",
-  "highlight": "https://basketball.mb.softbank.jp/api/v1/video/highlight?game_id=506466&utm_source=bleague&utm_medium=bleague&utm_campaign=bleague_bleague_032",
-  "status": "終了",
-  "level": null,
-  "meter": null,
-  "text": null,
-  "clock": null,
-  "alerts": [],
-  "plays": [
-   {
-    "clock": "1Q 8:33",
-    "text": "逆転・3P　島谷 怜"
-   },
-   {
-    "clock": "1Q 7:09",
-    "text": "逆転　マークイーズ・ボールデン"
-   },
-   {
-    "clock": "1Q 6:32",
-    "text": "逆転・ダンク　ドワイト・ラモス"
-   },
-   {
-    "clock": "1Q 3:31",
-    "text": "3P　ドワイト・ラモス"
-   },
-   {
-    "clock": "2Q 6:11",
-    "text": "3P　ドワイト・ラモス"
-   },
-   {
-    "clock": "2Q 5:22",
-    "text": "3P　ドワイト・ラモス"
-   },
-   {
-    "clock": "2Q 2:53",
-    "text": "3P　菊地 広人"
-   },
-   {
-    "clock": "2Q 1:35",
-    "text": "ダンク　マークイーズ・ボールデン"
-   },
-   {
-    "clock": "3Q 2:39",
-    "text": "ダンク　ジョン・ハーラー"
-   },
-   {
-    "clock": "3Q 0:56",
-    "text": "ダンク　ジョン・ハーラー"
-   },
-   {
-    "clock": "4Q 9:34",
-    "text": "3P　菊地 広人"
-   },
-   {
-    "clock": "4Q 9:11",
-    "text": "ダンク　ゲイリー・クラーク"
-   },
-   {
-    "clock": "4Q 7:22",
-    "text": "3P　菊地 広人"
-   },
-   {
-    "clock": "4Q 6:45",
-    "text": "3P　ドワイト・ラモス"
-   },
-   {
-    "clock": "4Q 5:03",
-    "text": "3P　ドワイト・ラモス"
-   },
-   {
-    "clock": "4Q 1:38",
-    "text": "ダンク　木林 優"
-   },
-   {
-    "clock": "4Q 0:09",
-    "text": "3P　菊地 広人"
-   }
-  ],
-  "heat": [
-   [
-    30,
-    15
-   ],
-   [
-    60,
-    15
-   ],
-   [
-    90,
-    20
-   ],
-   [
-    120,
-    20
-   ],
-   [
-    150,
-    20
-   ],
-   [
-    180,
-    20
-   ],
-   [
-    210,
-    20
-   ],
-   [
-    240,
-    20
-   ],
-   [
-    270,
-    10
-   ],
-   [
-    300,
-    10
-   ],
-   [
-    330,
-    20
-   ],
-   [
-    360,
-    20
-   ],
-   [
-    390,
-    10
-   ],
-   [
-    420,
-    20
-   ],
-   [
-    450,
-    20
-   ],
-   [
-    480,
-    10
-   ],
-   [
-    510,
-    7
-   ],
-   [
-    540,
-    0
-   ],
-   [
-    570,
-    20
-   ],
-   [
-    600,
-    17
-   ],
-   [
-    630,
-    12
-   ],
-   [
-    660,
-    7
-   ],
-   [
-    690,
-    10
-   ],
-   [
-    720,
-    10
-   ],
-   [
-    750,
-    10
-   ],
-   [
-    780,
-    10
-   ],
-   [
-    810,
-    17
-   ],
-   [
-    840,
-    27
-   ],
-   [
-    870,
-    20
-   ],
-   [
-    900,
-    25
-   ],
-   [
-    930,
-    25
-   ],
-   [
-    960,
-    20
-   ],
-   [
-    990,
-    15
-   ],
-   [
-    1020,
-    10
-   ],
-   [
-    1050,
-    17
-   ],
-   [
-    1080,
-    10
-   ],
-   [
-    1110,
-    10
-   ],
-   [
-    1140,
-    10
-   ],
-   [
-    1170,
-    10
-   ],
-   [
-    1200,
-    0
-   ],
-   [
-    1230,
-    0
-   ],
-   [
-    1260,
-    0
-   ],
-   [
-    1290,
-    5
-   ],
-   [
-    1320,
-    5
-   ],
-   [
-    1350,
-    5
-   ],
-   [
-    1380,
-    5
-   ],
-   [
-    1410,
-    15
-   ],
-   [
-    1440,
-    15
-   ],
-   [
-    1470,
-    15
-   ],
-   [
-    1500,
-    5
-   ],
-   [
-    1530,
-    5
-   ],
-   [
-    1560,
-    5
-   ],
-   [
-    1590,
-    0
-   ],
-   [
-    1620,
-    0
-   ],
-   [
-    1650,
-    15
-   ],
-   [
-    1680,
-    15
-   ],
-   [
-    1710,
-    10
-   ],
-   [
-    1740,
-    5
-   ],
-   [
-    1770,
-    10
-   ],
-   [
-    1800,
-    15
-   ],
-   [
-    1830,
-    15
-   ],
-   [
-    1860,
-    25
-   ],
-   [
-    1890,
-    20
-   ],
-   [
-    1920,
-    10
-   ],
-   [
-    1950,
-    5
-   ],
-   [
-    1980,
-    15
-   ],
-   [
-    2010,
-    25
-   ],
-   [
-    2040,
-    15
-   ],
-   [
-    2070,
-    5
-   ],
-   [
-    2100,
-    15
-   ],
-   [
-    2130,
-    15
-   ],
-   [
-    2160,
-    10
-   ],
-   [
-    2190,
-    0
-   ],
-   [
-    2220,
-    0
-   ],
-   [
-    2250,
-    40
-   ],
-   [
-    2280,
-    40
-   ],
-   [
-    2310,
-    55
-   ],
-   [
-    2340,
-    55
-   ],
-   [
-    2370,
-    55
    ]
   ],
   "tracked": true
