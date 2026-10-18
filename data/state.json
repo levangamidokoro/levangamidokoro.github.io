@@ -1,5 +1,5 @@
 {
- "updated": "2026-10-18 17:04",
+ "updated": "2026-10-18 17:10",
  "today": {
   "key": "506474",
   "date": "2026-10-18",
@@ -12,10 +12,10 @@
   "url": "https://www.bleague.jp/game_detail/?ScheduleKey=506474&tab=1",
   "highlight": null,
   "status": "試合中",
-  "level": "低",
-  "meter": 0,
-  "text": "第4Q。",
-  "clock": "4Q 3:53",
+  "level": "中",
+  "meter": 45,
+  "text": "第4Q残り1分23秒。相手の3P",
+  "clock": "4Q 1:23",
   "alerts": [],
   "plays": [
    {
@@ -357,8 +357,28 @@
     0
    ],
    [
-    2167,
+    2190,
     0
+   ],
+   [
+    2220,
+    5
+   ],
+   [
+    2250,
+    45
+   ],
+   [
+    2280,
+    50
+   ],
+   [
+    2310,
+    45
+   ],
+   [
+    2317,
+    45
    ]
   ],
   "tracked": true
