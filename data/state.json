@@ -1,5 +1,5 @@
 {
- "updated": "2026-10-18 17:10",
+ "updated": "2026-10-18 17:16",
  "today": {
   "key": "506474",
   "date": "2026-10-18",
@@ -11,11 +11,11 @@
   "place": "アウェイ（神奈川県）",
   "url": "https://www.bleague.jp/game_detail/?ScheduleKey=506474&tab=1",
   "highlight": null,
-  "status": "試合中",
-  "level": "中",
-  "meter": 45,
-  "text": "第4Q残り1分23秒。相手の3P",
-  "clock": "4Q 1:23",
+  "status": "終了",
+  "level": null,
+  "meter": null,
+  "text": null,
+  "clock": null,
   "alerts": [],
   "plays": [
    {
@@ -377,8 +377,12 @@
     45
    ],
    [
-    2317,
-    45
+    2340,
+    40
+   ],
+   [
+    2370,
+    40
    ]
   ],
   "tracked": true
