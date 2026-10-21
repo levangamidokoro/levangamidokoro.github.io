@@ -1,5 +1,5 @@
 {
- "updated": "2026-10-21 21:17",
+ "updated": "2026-10-21 21:23",
  "today": {
   "key": "506486",
   "date": "2026-10-21",
@@ -12,10 +12,10 @@
   "url": "https://www.bleague.jp/game_detail/?ScheduleKey=506486&tab=1",
   "highlight": null,
   "status": "試合中",
-  "level": "中",
-  "meter": 50,
-  "text": "第4Q残り1分43秒。レバンガの3P！",
-  "clock": "4Q 1:43",
+  "level": "低",
+  "meter": 40,
+  "text": "第4Q残り9秒。",
+  "clock": "4Q 0:09",
   "alerts": [],
   "plays": [
    {
@@ -389,8 +389,20 @@
     50
    ],
    [
-    2297,
+    2310,
     50
+   ],
+   [
+    2340,
+    45
+   ],
+   [
+    2370,
+    45
+   ],
+   [
+    2391,
+    40
    ]
   ],
   "tracked": true
