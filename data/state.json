@@ -1,5 +1,5 @@
 {
- "updated": "2026-10-21 19:07",
+ "updated": "2026-10-21 19:14",
  "today": {
   "key": "506486",
   "date": "2026-10-21",
@@ -11,15 +11,36 @@
   "place": "ホーム",
   "url": "https://www.bleague.jp/game_detail/?ScheduleKey=506486&tab=1",
   "highlight": null,
-  "status": "まもなく",
-  "level": null,
-  "meter": null,
-  "text": null,
-  "clock": null,
+  "status": "試合中",
+  "level": "低",
+  "meter": 7,
+  "text": "第1Q、接戦。",
+  "clock": "1Q 7:58",
   "alerts": [],
   "plays": [],
-  "heat": [],
-  "tracked": false
+  "heat": [
+   [
+    30,
+    10
+   ],
+   [
+    60,
+    10
+   ],
+   [
+    90,
+    10
+   ],
+   [
+    120,
+    7
+   ],
+   [
+    122,
+    7
+   ]
+  ],
+  "tracked": true
  },
  "next": [
   {
