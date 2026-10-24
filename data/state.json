@@ -1,5 +1,5 @@
 {
- "updated": "2026-10-24 23:03",
+ "updated": "2026-10-25 00:03",
  "today": {
   "key": "506507",
   "date": "2026-10-24",
@@ -10,7 +10,7 @@
   "is_home": false,
   "place": "アウェイ（広島県）",
   "url": "https://www.bleague.jp/game_detail/?ScheduleKey=506507&tab=1",
-  "highlight": null,
+  "highlight": "https://basketball.mb.softbank.jp/api/v1/video/highlight?game_id=506507&utm_source=bleague&utm_medium=bleague&utm_campaign=bleague_bleague_032",
   "status": "終了",
   "level": null,
   "meter": null,
