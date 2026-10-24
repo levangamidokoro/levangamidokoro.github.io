@@ -1,5 +1,5 @@
 {
- "updated": "2026-10-24 14:07",
+ "updated": "2026-10-24 14:13",
  "today": {
   "key": "506507",
   "date": "2026-10-24",
@@ -11,15 +11,32 @@
   "place": "アウェイ（広島県）",
   "url": "https://www.bleague.jp/game_detail/?ScheduleKey=506507&tab=1",
   "highlight": null,
-  "status": "まもなく",
-  "level": null,
-  "meter": null,
-  "text": null,
-  "clock": null,
+  "status": "試合中",
+  "level": "低",
+  "meter": 12,
+  "text": "第1Q、接戦。相手の3P",
+  "clock": "1Q 8:16",
   "alerts": [],
   "plays": [],
-  "heat": [],
-  "tracked": false
+  "heat": [
+   [
+    30,
+    15
+   ],
+   [
+    60,
+    15
+   ],
+   [
+    90,
+    5
+   ],
+   [
+    104,
+    12
+   ]
+  ],
+  "tracked": true
  },
  "next": [
   {
