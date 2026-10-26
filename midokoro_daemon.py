@@ -202,12 +202,14 @@ def in_window(g: dict, t: datetime) -> bool:
 # ---------- 試合データ（公式サイトが使うもの） ----------
 
 _latest: dict[str, str] = {}
+_changed_at: dict[str, datetime] = {}     # 公式の試合データが最後に更新された時刻（止まったことに気づくため）
 _ctx_cache: dict[str, dict] = {}
 
 
 def fetch_context(key: str) -> dict | None:
     """更新があったときだけ取り直す。試合前は公開されていない（403）ので None"""
-    latest = requests.get(CONTEXT_URL.format(key=key, name="latestid"), headers=HEADERS, timeout=15)
+    latest = requests.get(CONTEXT_URL.format(key=key, name="latestid"), headers={**HEADERS, "Cache-Control": "no-cache"},
+                          params={"_": int(time.time())}, timeout=15)
     if latest.status_code != 200:
         return None
     lid = latest.text.strip()
@@ -216,6 +218,7 @@ def fetch_context(key: str) -> dict | None:
     raw = requests.get(CONTEXT_URL.format(key=key, name=f"{lid}.json"), headers=HEADERS, timeout=20).content
     data = json.loads(gzip.decompress(raw) if raw[:2] == b"\x1f\x8b" else raw)
     _latest[key], _ctx_cache[key] = lid, data
+    _changed_at[key] = now()
     d = DATA / "games" / key                # 学習用に、更新ごとの実時刻つきで保存
     d.mkdir(parents=True, exist_ok=True)
     with gzip.open(d / f"{now():%Y%m%d_%H%M%S}_{lid}.json.gz", "wt", encoding="utf-8") as f:
@@ -323,6 +326,7 @@ class Tracker:
         self._heat_tried: set[str] = set()
         self._live_sent: tuple | None = None
         self._live_at: datetime | None = None
+        self._stale_logged: set[str] = set()
 
     def status_of(self, g: dict, t: datetime, ev: dict | None) -> str:
         if g["final"] or g["key"] in self.ended:
@@ -395,11 +399,25 @@ class Tracker:
         except Exception as e:
             log(f"いまの熱さを置けませんでした: {e}")
 
+    def mark_stale(self, g: dict, t: datetime, ev: dict, pbp: list) -> dict:
+        """公式の試合データが6分以上更新されていなければ、説明文でそう伝える（ハーフタイムなどピリオドの合間は除く）"""
+        since = _changed_at.get(g["key"])
+        last = (pbp[-1].get("PlayText") or "") if pbp else ""
+        if not since or t - since < timedelta(minutes=6) or "ピリオドエンド" in last or "タイムストップ" in last and "ピリオド" in last:
+            return ev
+        if g["key"] not in self._stale_logged:
+            self._stale_logged.add(g["key"])
+            log(f"公式の試合データが {since:%H:%M} から更新されていません {g['opponent']}戦")
+        return {**ev, "text": f"公式の試合データが{since:%H:%M}から更新されていません。再開すると、ゲージも動きだします。"}
+
     def ensure_heat(self, g: dict) -> None:
         """終わった試合の熱さの推移がまだなければ、試合データから計算して残す（見どころなうが動いていなかった試合も）"""
         key = g["key"]
         rec = self.alerts.get(key) or {}
-        if rec.get("heat") or rec.get("heat_none") or rec.get("heat_tries", 0) >= 3 or key in self._heat_tried:
+        # 試合終了まで入った推移があれば済み。途中で公式の試合データが止まった試合は、あとから全部そろうので1時間ごとに取り直す（3日まで）
+        if rec.get("complete") or rec.get("heat_none") or rec.get("heat_tries", 0) >= 3 or key in self._heat_tried:
+            return
+        if date.fromisoformat(g["date"]) < game_day(now()) - timedelta(days=3):
             return
         self._heat_tried.add(key)
         try:
@@ -416,8 +434,8 @@ class Tracker:
             heat = []
         if heat:
             rec["heat"] = heat
-            if not rec.get("plays"):
-                rec["plays"] = midokoro_score.good_plays(pbp, g["is_home"])
+            rec["plays"] = midokoro_score.good_plays(pbp, g["is_home"])
+            rec["complete"] = any(p.get("GameEndRowFlg") or "試合終了" in (p.get("PlayText") or "") for p in pbp)
             log(f"熱さの推移を計算 {g['opponent']}戦（{len(heat)}点）")
         elif ctx is not None:
             rec["heat_none"] = True               # データはあるがプレー記録がない
@@ -457,6 +475,7 @@ class Tracker:
                 log(f"試合終了 {g['opponent']}戦")
                 ev = None
             elif ev:
+                ev = self.mark_stale(g, t, ev, pbp)
                 rec = self.alerts.setdefault(g["key"], {"items": [], "line": False, "flags": []})
                 if not rec.get("tracked"):
                     rec["tracked"] = True          # この試合を見ていた印（「見どころなし」と言ってよいか）

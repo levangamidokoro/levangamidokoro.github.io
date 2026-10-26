@@ -1,1 +1,1 @@
-{"id": "2026-10-14-gauge-push", "run": [{"workflow": "deploy-api.yml"}, {"workflow": "midokoro.yml", "inputs": {"force_publish": "true"}}]}
+{"id": "2026-10-26-stall-fix", "run": [{"workflow": "midokoro.yml", "inputs": {"force_publish": "true"}}]}
