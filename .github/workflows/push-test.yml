@@ -3,9 +3,9 @@ name: push-test
 on:
   workflow_dispatch:
     inputs:
-      message:
-        description: "本文"
-        default: "テスト通知です。届いていれば設定は完了です。"
+      kind:
+        description: "full（いま見て！）か geki（激アツ！）"
+        default: "geki"
 permissions:
   contents: read
   id-token: write
@@ -21,5 +21,15 @@ jobs:
       - name: 送信
         env:
           MIDOKORO_API: ${{ vars.MIDOKORO_API }}
-          MSG: ${{ github.event.inputs.message }}
-        run: python -c "import os, push_api; print('送れた件数', push_api.send_all('見どころなう（テスト）', os.environ['MSG'], './'))"
+          KIND: ${{ github.event.inputs.kind }}
+        run: |
+          python - <<'PY'
+          import os, push_api
+          from midokoro_daemon import gauge_text
+          site = "https://levangamidokoro.github.io/"
+          if os.environ.get("KIND") == "full":
+              n = push_api.send_all("いま見て！ 広島戦（テスト）", f"{gauge_text(100)}\nレバンガが逆転！", site, site + "push-full.png")
+          else:
+              n = push_api.send_all("激アツ！ 広島戦（テスト）", f"{gauge_text(142)}\nレバンガが逆転！", site, site + "push-burst-5.png")
+          print("送れた件数", n)
+          PY
