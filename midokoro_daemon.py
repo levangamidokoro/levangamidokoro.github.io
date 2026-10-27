@@ -243,7 +243,7 @@ def save_alerts(alerts: dict) -> None:
 
 # ---------- 通知 ----------
 
-def notify_web(title: str, body: str, url: str, image: str | None = None) -> None:
+def notify_web(title: str, body: str, url: str, image: str | None = None, game: dict | None = None) -> None:
     if not PUSH_ENABLED:
         return
     try:
@@ -251,7 +251,7 @@ def notify_web(title: str, body: str, url: str, image: str | None = None) -> Non
             import push_api as webpush
         else:
             import webpush
-        n = webpush.send_all(title, body, url, image)
+        n = webpush.send_all(title, body, url, image, game)
         log(f"Webプッシュ送信 {n}件")
     except Exception as e:
         log(f"Webプッシュ失敗: {e}")
@@ -370,7 +370,10 @@ class Tracker:
         url = GAME_PAGE.format(key=key)
         if geki or key not in self.last_notify or t - self.last_notify[key] >= NOTIFY_COOLDOWN:
             self.last_notify[key] = t
-            notify_web(title, body, url, image)
+            api = os.environ.get("MIDOKORO_API", "").rstrip("/")
+            kind = "geki" if geki else "full"
+            tap = f"{api}/api/go?g={key}&k={kind}" if api else url      # タップを数えてから公式の試合ページへ
+            notify_web(title, body, tap, image, {"key": key, "date": g.get("date", ""), "opponent": g["opponent"], "kind": kind, "pct": pct})
         if not rec["line"]:
             rec["line"] = True                     # 無料枠節約のため1試合1回まで
             notify_line(f"【見どころなう】{title}\n{body}\n{url}")

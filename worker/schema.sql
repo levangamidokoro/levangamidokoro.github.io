@@ -28,3 +28,16 @@ CREATE TABLE IF NOT EXISTS kv (      -- 小さな覚え書き（実行の依頼�
   k TEXT PRIMARY KEY,
   v TEXT NOT NULL
 );
+
+CREATE TABLE IF NOT EXISTS games (    -- 試合ごとの記録（通知を送った試合だけ）
+  key      TEXT PRIMARY KEY,          -- B.LEAGUEの試合番号
+  date     TEXT NOT NULL DEFAULT '',
+  opponent TEXT NOT NULL DEFAULT '',
+  peak     INTEGER NOT NULL DEFAULT 0 -- その試合で送った通知の熱さの最高（%）
+);
+CREATE TABLE IF NOT EXISTS game_events ( -- 試合ごとの回数（sent_full, sent_geki, tap_full, tap_geki, notify_full, notify_geki）
+  key  TEXT NOT NULL,
+  kind TEXT NOT NULL,
+  n    INTEGER NOT NULL DEFAULT 0,
+  PRIMARY KEY (key, kind)
+);

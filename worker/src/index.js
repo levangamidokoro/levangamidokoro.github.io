@@ -6,7 +6,8 @@
 //   POST /api/hit          ページの表示を1回数える（Cookieは使わない）
 //   GET  /api/live         試合中の「いまの熱さ」（ページが20秒ごとに読む）
 // 閲覧用トークンが必要
-//   GET  /api/stats        アクセス数・通知登録数の集計
+//   GET  /api/stats        アクセス数・通知登録数・試合ごとの通知とタップの集計
+//   GET  /api/go           通知のタップを数えて、B.LEAGUE公式の試合ページへ移す（?g=試合番号&k=full|geki）
 // GitHub Actions だけが呼べる（GitHubが発行する本人証明トークン＝OIDCで確認。合言葉の共有は不要）
 //   POST /api/notify       登録者全員にWebプッシュを送る（40件ずつ。cursor を返すので続きを呼ぶ）
 //   POST /api/live         「いまの熱さ」を置く（収集プログラムが20秒ごとに呼ぶ）
@@ -87,6 +88,12 @@ async function purge(env) {
   ]);
 }
 
+async function gameBump(env, key, kind, n = 1) {
+  if (!n) return;
+  await env.DB.prepare("INSERT INTO game_events (key, kind, n) VALUES (?1, ?2, ?3) ON CONFLICT(key, kind) DO UPDATE SET n = n + ?3")
+    .bind(key, kind, n).run();
+}
+
 async function stats(env) {
   const from = daysAgo(KEEP_DAYS - 1);
   const ev = await env.DB.prepare("SELECT day, kind, n FROM events WHERE day >= ?1 ORDER BY day").bind(from).all();
@@ -98,12 +105,19 @@ async function stats(env) {
   for (const r of ev.results) if (days[r.day]) days[r.day][r.kind] = r.n;
   for (const r of uv.results) if (days[r.day]) days[r.day].uniq = r.n;
   const byDevice = Object.fromEntries(subs.results.map((r) => [r.device || "不明", r.n]));
+  const gs = (await env.DB.prepare("SELECT key, date, opponent, peak FROM games ORDER BY date DESC, key DESC LIMIT 60").all()).results;
+  const ge = gs.length ? (await env.DB.prepare(`SELECT key, kind, n FROM game_events WHERE key IN (${gs.map(() => "?").join(",")})`)
+    .bind(...gs.map((g) => g.key)).all()).results : [];
+  const games = gs.map((g) => ({ ...g, sent_full: 0, sent_geki: 0, tap_full: 0, tap_geki: 0, notify_full: 0, notify_geki: 0 }));
+  const byKey = Object.fromEntries(games.map((g) => [g.key, g]));
+  for (const r of ge) if (byKey[r.key] && r.kind in byKey[r.key]) byKey[r.key][r.kind] = r.n;
   return {
     generated: jst().toISOString().slice(0, 16).replace("T", " "),
     subscribers: Object.values(byDevice).reduce((a, b) => a + b, 0),
     by_device: byDevice,
     totals: Object.fromEntries(total.results.map((r) => [r.kind, r.n])),
     days: Object.values(days),
+    games,
   };
 }
 
@@ -346,6 +360,15 @@ export default {
         liveMemo = { t: Date.now(), v };
         return json({ ok: true }, 200, h);
       }
+      if (url.pathname === "/api/go" && req.method === "GET") {   // 通知のタップ：数えてから公式の試合ページへ（行き先は試合番号から作るので、ほかへは飛ばない）
+        const g = url.searchParams.get("g") || "", k = url.searchParams.get("k") === "geki" ? "geki" : "full";
+        if (!/^\d{1,10}$/.test(g)) return Response.redirect("https://levangamidokoro.github.io/", 302);
+        try {
+          const known = await env.DB.prepare("SELECT 1 AS x FROM games WHERE key = ?1").bind(g).first("x");
+          if (known) await gameBump(env, g, `tap_${k}`);
+        } catch (e) {}
+        return Response.redirect(`https://www.bleague.jp/game_detail/?ScheduleKey=${g}&tab=1`, 302);
+      }
       if (url.pathname === "/api/stats" && req.method === "GET") {
         if (!authed(req, env.STATS_TOKEN)) return json({ ok: false }, 401, h);
         return json(await stats(env), 200, h);
@@ -355,6 +378,8 @@ export default {
         const r = await body(req);
         const image = /^https:\/\/levangamidokoro\.github\.io\/[\w.-]+\.png$/.test(String(r.image || "")) ? String(r.image) : "";   // 自分のページの画像だけ
         const payload = JSON.stringify({ title: String(r.title || "見どころなう").slice(0, 80), body: String(r.body || "").slice(0, 200), url: String(r.url || "./"), image });
+        const game = r.game && /^\d{1,10}$/.test(String(r.game.key || "")) ? r.game : null;   // 試合の通知なら、試合ごとにも数える
+        const gk = game ? (r.game.kind === "geki" ? "geki" : "full") : null;
         const cursor = Number(url.searchParams.get("cursor") || 0);
         const rows = (await env.DB.prepare("SELECT rowid AS id, endpoint, p256dh, auth FROM subs WHERE rowid > ?1 ORDER BY rowid LIMIT ?2").bind(cursor, BATCH).all()).results;
         let sent = 0, failed = 0; const gone = [], why = [];
@@ -375,6 +400,13 @@ export default {
         await bump(env, "gone", gone.length);
         await bump(env, "push_sent", sent);
         await bump(env, "push_fail", failed);
+        if (game) {
+          const pct = Math.max(0, Math.min(300, Math.round(+game.pct || 0)));
+          await env.DB.prepare("INSERT INTO games (key, date, opponent, peak) VALUES (?1, ?2, ?3, ?4) ON CONFLICT(key) DO UPDATE SET peak = MAX(peak, ?4), date = ?2, opponent = ?3")
+            .bind(String(game.key), String(game.date || "").slice(0, 10), String(game.opponent || "").slice(0, 20), pct).run();
+          await gameBump(env, String(game.key), `sent_${gk}`, sent);
+          if (cursor === 0) await gameBump(env, String(game.key), `notify_${gk}`);
+        }
         const next = rows.length === BATCH ? rows[rows.length - 1].id : null;
         return json({ ok: true, sent, failed, gone: gone.length, cursor: next, ...(env.DEV_NOTIFY_TOKEN ? { why: why.slice(0, 5) } : {}) }, 200, h);
       }

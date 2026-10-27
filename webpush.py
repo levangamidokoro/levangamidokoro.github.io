@@ -76,7 +76,7 @@ def remove(endpoint: str) -> None:
         _save([s for s in _load() if s["endpoint"] != endpoint])
 
 
-def send_all(title: str, body: str, url: str, image: str | None = None) -> int:
+def send_all(title: str, body: str, url: str, image: str | None = None, game: dict | None = None) -> int:
     """全員に送る。送れた件数を返す"""
     payload = json.dumps({"title": title, "body": body, "url": url, "image": image or ""}, ensure_ascii=False)
     key = str(KEY_FILE) if KEY_FILE.exists() else (_vapid() and str(KEY_FILE))

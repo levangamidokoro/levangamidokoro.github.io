@@ -1,1 +1,1 @@
-{"id": "2026-10-26-push-test", "run": [{"workflow": "push-test.yml", "inputs": {"kind": "geki"}}]}
+{"id": "2026-10-27-game-stats", "run": [{"workflow": "deploy-api.yml"}, {"workflow": "midokoro.yml", "inputs": {"force_publish": "true"}}]}

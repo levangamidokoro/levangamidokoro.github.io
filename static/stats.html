@@ -55,6 +55,10 @@ footer{color:var(--sub);font-size:12px;margin:40px 0 24px}
   <p class="note" id="msg"></p>
   <div id="out" hidden>
     <div class="tiles" id="tiles"></div>
+    <h2>試合ごとの通知と反応</h2>
+    <p class="cap">通知を送った試合だけ。タップ率＝通知を開いた回数 ÷ 届けた数。提案資料の数字はここから取ります。</p>
+    <div id="games"></div>
+    <button type="button" id="csv" style="margin-top:12px">表をCSVで保存</button>
     <h2>日ごとのアクセス数</h2>
     <p class="cap">ページが表示された回数（直近30日）。Cookieは使わず、ロボットは除いています。</p>
     <div class="chart" id="c1"></div>
@@ -114,8 +118,36 @@ footer{color:var(--sub);font-size:12px;margin:40px 0 24px}
     $("tbl").innerHTML = "<table><tr><th>日付</th><th>アクセス</th><th>訪問者</th><th>新規登録</th><th>解除</th><th>期限切れ</th><th>登録数</th><th>通知送信</th></tr>" +
       days.slice().reverse().map((x, j) => { const i = days.length - 1 - j;
         return `<tr><td>${x.day}</td><td>${fmt(x.view)}</td><td>${fmt(x.uniq)}</td><td>${fmt(x.sub)}</td><td>${fmt(x.unsub)}</td><td>${fmt(x.gone)}</td><td>${fmt(subs[i])}</td><td>${fmt(x.push_sent)}</td></tr>`; }).join("") + "</table>";
+    games(d.games || []);
     $("gen").textContent = d.generated;
   }
+
+  let gameRows = [];
+  const pc = (a, b) => b ? `${Math.round(a / b * 1000) / 10}%` : "-";
+  function games(list) {
+    gameRows = list.map((g) => {
+      const sent = g.sent_full + g.sent_geki, tap = g.tap_full + g.tap_geki;
+      return { date: g.date, opp: g.opponent, peak: g.peak, nf: g.notify_full, ng: g.notify_geki, sent, tap, rate: pc(tap, sent),
+               geki: g.notify_geki ? pc(g.tap_geki, g.sent_geki) : "-" };
+    });
+    if (!gameRows.length) { $("games").innerHTML = '<p class="note">まだ試合の通知はありません。次の試合から記録されます。</p>'; $("csv").hidden = true; return; }
+    const sent = gameRows.reduce((a, r) => a + r.sent, 0), tap = gameRows.reduce((a, r) => a + r.tap, 0);
+    $("games").innerHTML = `<div class="tiles" style="margin-top:0">
+      <div class="tile"><div class="k">記録した試合</div><div class="v">${fmt(gameRows.length)}</div><div class="d">通知を送った試合</div></div>
+      <div class="tile"><div class="k">届けた通知</div><div class="v">${fmt(sent)}</div><div class="d">端末ごとの合計</div></div>
+      <div class="tile"><div class="k">タップ</div><div class="v">${fmt(tap)}</div><div class="d">タップ率 ${pc(tap, sent)}</div></div></div>
+      <table style="margin-top:12px"><tr><th>日付</th><th>相手</th><th>最高の熱さ</th><th>いま見て！</th><th>激アツ！</th><th>届けた数</th><th>タップ</th><th>タップ率</th><th>激アツのタップ率</th></tr>` +
+      gameRows.map((r) => `<tr><td>${r.date}</td><td>${r.opp}</td><td>${r.peak}%</td><td>${r.nf}回</td><td>${r.ng}回</td><td>${fmt(r.sent)}</td><td>${fmt(r.tap)}</td><td>${r.rate}</td><td>${r.geki}</td></tr>`).join("") + "</table>";
+    $("csv").hidden = false;
+  }
+  $("csv").onclick = () => {
+    const head = ["日付", "相手", "最高の熱さ(%)", "いま見て！(回)", "激アツ！(回)", "届けた数", "タップ", "タップ率", "激アツのタップ率"];
+    const rows = gameRows.map((r) => [r.date, r.opp, r.peak, r.nf, r.ng, r.sent, r.tap, r.rate, r.geki]);
+    const text = "\uFEFF" + [head, ...rows].map((a) => a.map((v) => `"${String(v).replace(/"/g, '""')}"`).join(",")).join("\r\n");
+    const a = document.createElement("a");
+    a.href = URL.createObjectURL(new Blob([text], { type: "text/csv" }));
+    a.download = `midokoro_games_${new Date().toISOString().slice(0, 10)}.csv`; a.click();
+  };
 
   const W = 820, H = 220, L = 40, R = 12, T = 12, B = 26;
   function nice(max) { if (max <= 4) return 4; const p = Math.pow(10, Math.floor(Math.log10(max))); const m = max / p; return (m <= 1 ? 1 : m <= 2 ? 2 : m <= 5 ? 5 : 10) * p; }
