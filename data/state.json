@@ -1,5 +1,5 @@
 {
- "updated": "2026-10-31 23:23",
+ "updated": "2026-11-01 00:23",
  "today": {
   "key": "506523",
   "date": "2026-10-31",
@@ -10,7 +10,7 @@
   "is_home": false,
   "place": "アウェイ（茨城県）",
   "url": "https://www.bleague.jp/game_detail/?ScheduleKey=506523&tab=1",
-  "highlight": null,
+  "highlight": "https://basketball.mb.softbank.jp/api/v1/video/highlight?game_id=506523&utm_source=bleague&utm_medium=bleague&utm_campaign=bleague_bleague_032",
   "status": "終了",
   "level": null,
   "meter": null,
