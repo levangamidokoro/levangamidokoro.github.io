@@ -1,5 +1,5 @@
 {
- "updated": "2026-11-01 15:07",
+ "updated": "2026-11-01 15:14",
  "today": {
   "key": "506534",
   "date": "2026-11-01",
@@ -11,15 +11,36 @@
   "place": "アウェイ（茨城県）",
   "url": "https://www.bleague.jp/game_detail/?ScheduleKey=506534&tab=1",
   "highlight": null,
-  "status": "まもなく",
-  "level": null,
-  "meter": null,
-  "text": null,
-  "clock": null,
+  "status": "試合中",
+  "level": "低",
+  "meter": 7,
+  "text": "第1Q、接戦。",
+  "clock": "1Q 7:56",
   "alerts": [],
   "plays": [],
-  "heat": [],
-  "tracked": false
+  "heat": [
+   [
+    30,
+    10
+   ],
+   [
+    60,
+    20
+   ],
+   [
+    90,
+    20
+   ],
+   [
+    120,
+    20
+   ],
+   [
+    124,
+    7
+   ]
+  ],
+  "tracked": true
  },
  "next": [
   {
