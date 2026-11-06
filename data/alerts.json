@@ -2649,5 +2649,30 @@
   ],
   "tracked": true,
   "complete": true
+ },
+ "506545": {
+  "items": [],
+  "line": false,
+  "flags": [],
+  "plays": [],
+  "heat": [
+   [
+    30,
+    10
+   ],
+   [
+    60,
+    12
+   ],
+   [
+    90,
+    15
+   ],
+   [
+    100,
+    10
+   ]
+  ],
+  "tracked": true
  }
 }
