@@ -1,5 +1,5 @@
 {
- "updated": "2026-11-06 21:02",
+ "updated": "2026-11-06 21:08",
  "today": {
   "key": "506545",
   "date": "2026-11-06",
@@ -12,10 +12,10 @@
   "url": "https://www.bleague.jp/game_detail/?ScheduleKey=506545&tab=1",
   "highlight": null,
   "status": "試合中",
-  "level": "高",
-  "meter": 95,
-  "text": "第4Q残り2分44秒、接戦。レバンガが勝ち越し！",
-  "clock": "4Q 2:44",
+  "level": "中",
+  "meter": 50,
+  "text": "第4Q残り1分25秒。",
+  "clock": "4Q 1:25",
   "alerts": [
    {
     "time": "20:44",
@@ -422,8 +422,20 @@
     70
    ],
    [
-    2236,
+    2250,
     95
+   ],
+   [
+    2280,
+    65
+   ],
+   [
+    2310,
+    70
+   ],
+   [
+    2315,
+    50
    ]
   ],
   "tracked": true
